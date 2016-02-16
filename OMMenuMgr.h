@@ -72,16 +72,16 @@
 
 
 
-#define MENU_ITEM           PROGMEM OMMenuItem
-#define MENU_LIST           PROGMEM OMMenuItem*
-#define MENU_VALUE          PROGMEM OMMenuValue
-#define MENU_FLAG           PROGMEM OMMenuValueFlag
-#define MENU_SELECT_ITEM    PROGMEM OMMenuSelectListItem
-#define MENU_SELECT_LIST    PROGMEM OMMenuSelectListItem*
-#define MENU_SELECT         PROGMEM OMMenuSelectValue
+#define MENU_ITEM           const PROGMEM OMMenuItem
+#define MENU_LIST           const PROGMEM OMMenuItem* const
+#define MENU_VALUE          const PROGMEM OMMenuValue
+#define MENU_FLAG           const PROGMEM OMMenuValueFlag
+#define MENU_SELECT_ITEM    const PROGMEM OMMenuSelectListItem
+#define MENU_SELECT_LIST    const PROGMEM OMMenuSelectListItem* const
+#define MENU_SELECT         const PROGMEM OMMenuSelectValue
 #define MENU_SELECT_SIZE(x) sizeof(x) / sizeof(OMMenuSelectListItem*)
 #define MENU_SIZE(x)        sizeof(x) / sizeof(OMMenuItem*)
-#define MENU_TARGET(x)      reinterpret_cast<void*>(x)
+#define MENU_TARGET(x)      const_cast<void*>(reinterpret_cast<const void*>(x))
 
 
 /** Select-Type Item
@@ -156,7 +156,7 @@ struct OMMenuValue {
     long    max;
     long    min;
     void*   targetValue;
-    int     eepromLoc = 0;
+    int     eepromLoc;
 };
 
 
@@ -909,11 +909,11 @@ class OMMenuMgr {
 
 public:
 
-    OMMenuMgr(OMMenuItem* c_first,
+    OMMenuMgr(const OMMenuItem * c_first);
+
+    void handleMenu(Button key,
     		MenuDrawHandler & drawHandler,
 			MenuExitHandler & exitHandler);
-
-    void handleMenu(Button key = BUTTON_NONE);
 
 	volatile bool isInMenu() const {
 		return m_inMenu;
@@ -932,8 +932,6 @@ private:
     OMMenuItem*    m_rootItem;
     OMMenuItem*    m_hist[OM_MENU_MAXDEPTH];
     uint8_t        m_curTarget;
-    MenuDrawHandler & m_draw;
-    MenuExitHandler & m_exit;
     char           m_dispBuf[OM_MENU_COLS];
 
     uint8_t       m_temp;
@@ -941,20 +939,22 @@ private:
     int           m_tempI;
     float         m_tempF;
 
-    void        _activate(OMMenuItem* p_item, bool p_return = false);
-    void        _edit(OMMenuItem* p_item, MenuChangeType p_type);
-    void        _displayList(OMMenuItem* p_item, uint8_t p_target = 0);
-    void        _displayEdit(OMMenuItem* p_item);
-    void        _menuNav(MenuChangeType p_mode);
-    void        _pushHist(OMMenuItem* p_item);
-    OMMenuItem* _popHist();
-    void        _display(char* p_str, int p_row, int p_col, int p_count);
-    void        _displayVoidNum(void* p_ptr, MenuEditType p_type, int p_row, int p_col);
-    void        _modifyTemp(MenuEditType p_type, MenuEditMode p_mode, long p_min, long p_max);
-    void        _exitMenu();
-    void        _modifySel(OMMenuValue* p_value, MenuEditMode p_mode);
-    void        _displaySelVal(OMMenuSelectListItem** p_list, uint8_t p_idx);
-    void        _displayFlagVal();
+    void        activate(OMMenuItem* p_item, MenuExitHandler & exitHandler, MenuDrawHandler & drawHandler, bool p_return = false);
+    void        edit(OMMenuItem* p_item, MenuChangeType p_type, MenuExitHandler & exitHandler, MenuDrawHandler & drawHandler);
+    void        displayList(OMMenuItem* p_item, MenuDrawHandler & drawHandler, uint8_t p_target = 0);
+    void        displayEdit(OMMenuItem* p_item, MenuDrawHandler & drawHandler);
+    void        menuNav(MenuChangeType p_mode, MenuExitHandler & exitHandler, MenuDrawHandler & drawHandler);
+    void        pushHist(OMMenuItem* p_item);
+    OMMenuItem* popHist();
+    void        display(char* p_str, int p_row, int p_col, int p_count, MenuDrawHandler & drawHandler);
+    void        displayVoidNum(void* p_ptr, MenuEditType p_type, int p_row, int p_col, MenuDrawHandler & drawHandler);
+    void        modifyTemp(MenuEditType p_type, MenuEditMode p_mode, long p_min, long p_max, MenuDrawHandler & drawHandler);
+    void        exitMenu(MenuExitHandler & exitHandler);
+    void        modifySel(OMMenuValue* p_value, MenuEditMode p_mode, MenuDrawHandler & drawHandler);
+    void        displaySelVal(OMMenuSelectListItem** p_list, uint8_t p_idx, MenuDrawHandler & drawHandler);
+    void        displayFlagVal(MenuDrawHandler & drawHandler);
+
+
 
 
     // Handle templates for EEPROM writing of different data types

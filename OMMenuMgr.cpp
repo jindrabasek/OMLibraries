@@ -47,12 +47,20 @@
 
  */
 
-OMMenuMgr::OMMenuMgr(OMMenuItem* c_first, MenuDrawHandler & drawHandler,
-		MenuExitHandler & exitHandler) :
-		m_draw(drawHandler), m_exit(exitHandler) {
+//#define MENU_DBG
 
-	m_curParent = c_first;
-	m_rootItem = c_first;
+#ifdef MENU_DBG
+#define DBG_P(x) Serial.print(F(#x)); Serial.print(F(" = ")); Serial.println(reinterpret_cast<uint16_t>(x)); delay(100);
+#define DBG(x) Serial.print(F(#x)); Serial.print(F(" = ")); Serial.println(x); delay(100);
+#else
+#define DBG_P(x) //
+#define DBG(x) //
+#endif
+
+OMMenuMgr::OMMenuMgr(const OMMenuItem* c_first) {
+
+	m_curParent = const_cast<OMMenuItem*>(c_first);
+	m_rootItem = const_cast<OMMenuItem*>(c_first);
 	m_inEdit = false;
 	m_curSel = 0;
 	m_curTarget = 0;
@@ -60,58 +68,59 @@ OMMenuMgr::OMMenuMgr(OMMenuItem* c_first, MenuDrawHandler & drawHandler,
 
 }
 
-void OMMenuMgr::_display(char* p_str, int p_row, int p_col, int p_count) {
-	m_draw.draw(p_str, p_row, p_col, p_count);
+void OMMenuMgr::display(char* p_str, int p_row, int p_col, int p_count, MenuDrawHandler & drawHandler) {
+	drawHandler.draw(p_str, p_row, p_col, p_count);
 }
 
 // What happens when a button is pressed? Handle this activity
 
-void OMMenuMgr::handleMenu(Button p_key) {
+void OMMenuMgr::handleMenu(Button p_key,
+		MenuDrawHandler & drawHandler,
+		MenuExitHandler & exitHandler) {
 	m_inMenu = true;
+
+	DBG(m_inMenu);
 
 	if (p_key == BUTTON_SELECT || p_key == BUTTON_FORWARD) {
 
 		if (m_inEdit) {
-			_edit(m_curSel, CHANGE_SAVE);
+			edit(m_curSel, CHANGE_SAVE, exitHandler, drawHandler);
 		} else {
 			if (m_curSel != 0)
-				_activate(m_curSel);
+				activate(m_curSel, exitHandler, drawHandler);
 			else
-				_activate(m_rootItem);
+				activate(m_rootItem, exitHandler, drawHandler);
 
 		}
 	} else if (p_key == BUTTON_NONE) {
-		_displayList(m_curParent, m_curTarget);
+		displayList(m_curParent, drawHandler, m_curTarget);
 	} else {
 		MenuChangeType changeType =
 				(p_key == BUTTON_INCREASE) ? CHANGE_UP :
 				(p_key == BUTTON_DECREASE) ? CHANGE_DOWN : CHANGE_ABORT; // BUTTON_BACK is CHANGE_ABORT
 
 		if (m_inEdit)
-			_edit(m_curSel, changeType);
+			edit(m_curSel, changeType, exitHandler, drawHandler);
 		else
-			_menuNav(changeType);
+			menuNav(changeType, exitHandler, drawHandler);
 	}
 
 }
 
 // exiting the menu entirely
 
-void OMMenuMgr::_exitMenu() {
+void OMMenuMgr::exitMenu(MenuExitHandler & exitHandler) {
 	m_curParent = m_rootItem;
 	m_curTarget = 0;
 
 	m_inMenu = false;
-	m_exit.exitMenu(true);
-
+	exitHandler.exitMenu(true);
+	exitHandler.exitMenuPostCallback();
 }
 
 // navigating through menus
 
-void OMMenuMgr::_menuNav(MenuChangeType p_mode) {
-
-	uint8_t childCount = pgm_read_byte(&(m_curParent->targetCount));
-	childCount--;
+void OMMenuMgr::menuNav(MenuChangeType p_mode, MenuExitHandler & exitHandler, MenuDrawHandler & drawHandler) {
 
 	if (p_mode == CHANGE_ABORT) {
 
@@ -120,25 +129,28 @@ void OMMenuMgr::_menuNav(MenuChangeType p_mode) {
 		m_curSel = 0;
 
 		// get previous menu level
-		OMMenuItem* newItem = _popHist();
+		OMMenuItem* newItem = popHist();
 
 		if (newItem == 0) {
 			// aborting at root
-			_exitMenu();
+			exitMenu(exitHandler);
 		} else {
 			m_curParent = newItem;
 			m_curTarget = 0;
-			_activate(m_curParent, true);
+			activate(m_curParent, exitHandler, drawHandler, true);
 		}
 
 	} else {
+
+		uint8_t childCount = pgm_read_byte(&(m_curParent->targetCount));
+		childCount--;
 
 		m_curTarget += p_mode == CHANGE_UP ? -1 : 1;
 		m_curTarget =
 				(m_curTarget > childCount && m_curTarget < 255) ?
 						0 : m_curTarget;
 		m_curTarget = m_curTarget == 255 ? childCount : m_curTarget;
-		_displayList(m_curParent, m_curTarget);
+		displayList(m_curParent, drawHandler, m_curTarget);
 		/*
 
 		 m_curTarget += p_mode == CHANGE_UP ? -1 : 1;
@@ -150,7 +162,7 @@ void OMMenuMgr::_menuNav(MenuChangeType p_mode) {
 }
 
 // activating a menu item
-void OMMenuMgr::_activate(OMMenuItem* p_item, bool p_return) {
+void OMMenuMgr::activate(OMMenuItem* p_item, MenuExitHandler & exitHandler, MenuDrawHandler & drawHandler, bool p_return) {
 
 	// get item type
 	MenuItemType type = (MenuItemType) pgm_read_byte(&(p_item->type));
@@ -158,17 +170,17 @@ void OMMenuMgr::_activate(OMMenuItem* p_item, bool p_return) {
 	// process activation based on type
 	if (type == ITEM_VALUE) {
 		m_inEdit = true;
-		_displayEdit(p_item);
+		displayEdit(p_item, drawHandler);
 	} else if (type == ITEM_MENU) {
 		// sub-menu
 
 		if (!p_return && p_item != m_curParent) {
-			_pushHist(m_curParent);
+			pushHist(m_curParent);
 			m_curParent = p_item;
 			m_curTarget = 0;
 		}
 
-		_displayList(p_item, m_curTarget);
+		displayList(p_item, drawHandler, m_curTarget);
 	} else if (type == ITEM_ACTION) {
 		// this is gnarly, dig? We're pulling a function pointer
 		// out of progmem
@@ -180,11 +192,11 @@ void OMMenuMgr::_activate(OMMenuItem* p_item, bool p_return) {
 			callback->doAction();
 		}
 
-		_displayList(m_curParent, m_curTarget);
+		displayList(m_curParent, drawHandler, m_curTarget);
 
 	} else if (type == ITEM_SCREEN) {
 
-		m_exit.exitMenu(false);
+		exitHandler.exitMenu(false);
 
 		// this is gnarly, dig? We're pulling a function pointer
 		// out of progmem
@@ -196,42 +208,64 @@ void OMMenuMgr::_activate(OMMenuItem* p_item, bool p_return) {
 			callback->doAction();
 		}
 
-		m_exit.exitMenuPostCallback();
+		exitHandler.exitMenuPostCallback();
 	}
 }
 
 // Display list rows on the screen
 
-void OMMenuMgr::_displayList(OMMenuItem* p_item, uint8_t p_target) {
+void OMMenuMgr::displayList(OMMenuItem* p_item, MenuDrawHandler & drawHandler, uint8_t p_target) {
+
+	DBG_P(p_item);
 
 	uint8_t childCount = pgm_read_byte(&(p_item->targetCount));
 	childCount--;
 
+	DBG(childCount);
+
 	OMMenuItem** items =
 			reinterpret_cast<OMMenuItem**>(reinterpret_cast<void*>(pgm_read_word(
 					&(p_item->target))));
+
+	DBG_P(items);
+
 	m_curSel = reinterpret_cast<OMMenuItem*>(pgm_read_word(&(items[p_target])));
+
+	DBG_P(m_curSel);
 
 	// loop through display rows
 	for (byte i = 0; i < OM_MENU_ROWS; i++) {
+		DBG(i);
+
 		// flush buffer
 		memset(m_dispBuf, ' ', sizeof(char) * sizeof(m_dispBuf));
+
+		DBG(i);
 
 		int startX = 0;
 
 		// display cursor on first row
 		if (i == 0) {
-			_display((char*) OM_MENU_CURSOR, i, 0,
-					sizeof(char) * sizeof(OM_MENU_CURSOR) - 1);
-			startX += (sizeof(char) * sizeof(OM_MENU_CURSOR) - 1);
+			int dispCur = sizeof(char) * sizeof(OM_MENU_CURSOR) - 1;
+			DBG(dispCur);
+
+			display((char*) OM_MENU_CURSOR, i, 0, dispCur, drawHandler);
+			startX += dispCur;
+
+			DBG(startX);
 		} else {
-			_display((char*) OM_MENU_NOCURSOR, i, 0,
-					sizeof(char) * sizeof(OM_MENU_NOCURSOR) - 1);
-			startX += (sizeof(char) * sizeof(OM_MENU_NOCURSOR) - 1);
+			int dispCur = sizeof(char) * sizeof(OM_MENU_CURSOR) - 1;
+			DBG(dispCur);
+
+			display((char*) OM_MENU_NOCURSOR, i, 0, dispCur, drawHandler);
+			startX += dispCur;
+
+			DBG(startX);
 		}
 
 		// if there's actually an item here, copy it to the display buffer
 		if (childCount >= p_target + i) {
+			DBG(childCount);
 			// OMMenuItem* item = reinterpret_cast<OMMenuItem*>( pgm_read_word(p_item->target.items[p_target + i]) );
 			OMMenuItem* item = reinterpret_cast<OMMenuItem*>(pgm_read_word(
 					&(items[p_target + i])));
@@ -239,21 +273,25 @@ void OMMenuMgr::_displayList(OMMenuItem* p_item, uint8_t p_target) {
 					sizeof(char) * sizeof(m_dispBuf));
 		}
 
-		_display(m_dispBuf, i, startX, OM_MENU_COLS);
+		DBG(childCount);
+
+		display(m_dispBuf, i, startX, OM_MENU_COLS, drawHandler);
+
+		DBG(childCount);
 	}
 
 }
 
 // display a value to be edited
 
-void OMMenuMgr::_displayEdit(OMMenuItem* p_item) {
+void OMMenuMgr::displayEdit(OMMenuItem* p_item, MenuDrawHandler & drawHandler) {
 
 	// display label
 
 	// copy data to buffer from progmem
 	memcpy_P(m_dispBuf, &(p_item->label), sizeof(char) * sizeof(m_dispBuf));
 
-	_display(m_dispBuf, 0, 0, OM_MENU_COLS);
+	display(m_dispBuf, 0, 0, OM_MENU_COLS, drawHandler);
 
 	OMMenuValue* value =
 			reinterpret_cast<OMMenuValue*>(reinterpret_cast<void*>(pgm_read_word(
@@ -299,7 +337,7 @@ void OMMenuMgr::_displayEdit(OMMenuItem* p_item) {
 				m_temp = i;
 		}
 
-		_displaySelVal(list, m_temp);
+		displaySelVal(list, m_temp, drawHandler);
 		return;
 	} else if (type == TYPE_BFLAG) {
 		OMMenuValueFlag* flag = reinterpret_cast<OMMenuValueFlag*>(valPtr);
@@ -312,20 +350,20 @@ void OMMenuMgr::_displayEdit(OMMenuItem* p_item) {
 		else
 			m_temp = 0;
 
-		_displayFlagVal();
+		displayFlagVal(drawHandler);
 		return;
 	} else if (type >= TYPE_FLOAT) // always run as last check
 		m_tempF = *reinterpret_cast<float*>(valPtr);
 
 	// throw number on-screen
-	_displayVoidNum(valPtr, type, 1, 0);
+	displayVoidNum(valPtr, type, 1, 0, drawHandler);
 
 }
 
 // rationalize a way to display any sort of number as a char*, rationalize it buddy, rationalize it good...
 
-void OMMenuMgr::_displayVoidNum(void* p_ptr, MenuEditType p_type, int p_row,
-		int p_col) {
+void OMMenuMgr::displayVoidNum(void* p_ptr, MenuEditType p_type, int p_row,
+		int p_col, MenuDrawHandler & drawHandler) {
 
 	// clear out display buffer
 	memset(m_dispBuf, ' ', sizeof(char) * sizeof(m_dispBuf));
@@ -352,14 +390,14 @@ void OMMenuMgr::_displayVoidNum(void* p_ptr, MenuEditType p_type, int p_row,
 		dtostrf(*reinterpret_cast<float*>(p_ptr), floatPrecision + 2,
 				floatPrecision, m_dispBuf);
 
-	_display(m_dispBuf, p_row, p_col, sizeof(char) * sizeof(m_dispBuf));
+	display(m_dispBuf, p_row, p_col, sizeof(char) * sizeof(m_dispBuf), drawHandler);
 
 }
 
 // handle modifying temp values based on their type
 
-void OMMenuMgr::_modifyTemp(MenuEditType p_type, MenuEditMode p_mode,
-		long p_min, long p_max) {
+void OMMenuMgr::modifyTemp(MenuEditType p_type, MenuEditMode p_mode,
+		long p_min, long p_max, MenuDrawHandler & drawHandler) {
 
 	void* tempNum;
 
@@ -424,13 +462,13 @@ void OMMenuMgr::_modifyTemp(MenuEditType p_type, MenuEditMode p_mode,
 	}
 
 	// display new temporary value
-	_displayVoidNum(tempNum, p_type, 1, 0);
+	displayVoidNum(tempNum, p_type, 1, 0, drawHandler);
 
 }
 
 // display the label value from a select list on the screen
 
-void OMMenuMgr::_displaySelVal(OMMenuSelectListItem** p_list, uint8_t p_idx) {
+void OMMenuMgr::displaySelVal(OMMenuSelectListItem** p_list, uint8_t p_idx, MenuDrawHandler & drawHandler) {
 
 	// clear out display buffer
 	memset(m_dispBuf, ' ', sizeof(char) * sizeof(m_dispBuf));
@@ -444,14 +482,14 @@ void OMMenuMgr::_displaySelVal(OMMenuSelectListItem** p_list, uint8_t p_idx) {
 	memcpy_P(m_dispBuf, &(item->label), sizeof(char) * OM_MENU_LBLLEN);
 
 	// display the buffer
-	_display(m_dispBuf, 1, 0, sizeof(char) * sizeof(m_dispBuf));
+	display(m_dispBuf, 1, 0, sizeof(char) * sizeof(m_dispBuf), drawHandler);
 
 }
 
 // modifying a select type value - we cycle through a list of
 // values by cycling list index...
 
-void OMMenuMgr::_modifySel(OMMenuValue* p_value, MenuEditMode p_mode) {
+void OMMenuMgr::modifySel(OMMenuValue* p_value, MenuEditMode p_mode, MenuDrawHandler & drawHandler) {
 
 	OMMenuSelectValue* sel = reinterpret_cast<OMMenuSelectValue*>(pgm_read_word(
 			&(p_value->targetValue)));
@@ -474,13 +512,13 @@ void OMMenuMgr::_modifySel(OMMenuValue* p_value, MenuEditMode p_mode) {
 			m_temp++;
 	}
 
-	_displaySelVal(list, m_temp);
+	displaySelVal(list, m_temp, drawHandler);
 
 }
 
 // displaying flag parameters
 
-void OMMenuMgr::_displayFlagVal() {
+void OMMenuMgr::displayFlagVal(MenuDrawHandler & drawHandler) {
 
 	// overwrite buffer
 	memset(m_dispBuf, ' ', sizeof(char) * sizeof(m_dispBuf));
@@ -492,13 +530,13 @@ void OMMenuMgr::_displayFlagVal() {
 		memcpy(m_dispBuf, (char*) OM_MENU_FLAG_OFF,
 				sizeof(char) * sizeof(OM_MENU_FLAG_OFF) - 1);
 
-	_display(m_dispBuf, 1, 0, sizeof(char) * sizeof(m_dispBuf));
+	display(m_dispBuf, 1, 0, sizeof(char) * sizeof(m_dispBuf), drawHandler);
 
 }
 
 // edit operations against a displayed value
 
-void OMMenuMgr::_edit(OMMenuItem* p_item, MenuChangeType p_type) {
+void OMMenuMgr::edit(OMMenuItem* p_item, MenuChangeType p_type, MenuExitHandler & exitHandler, MenuDrawHandler & drawHandler) {
 
 	OMMenuValue* thisValue = reinterpret_cast<OMMenuValue*>(pgm_read_word(
 			&(p_item->target)));
@@ -511,17 +549,17 @@ void OMMenuMgr::_edit(OMMenuItem* p_item, MenuChangeType p_type) {
 
 	if (p_type == CHANGE_ABORT) {
 		m_inEdit = false;
-		_activate(m_curParent, true);
+		activate(m_curParent, exitHandler, drawHandler, true);
 	}
 
 	else if (p_type == CHANGE_UP || p_type == CHANGE_DOWN) {
 		if (type == TYPE_SELECT) {
-			_modifySel(thisValue, mode);
+			modifySel(thisValue, mode, drawHandler);
 		} else if (type == TYPE_BFLAG) {
 			m_temp = (m_temp == 1) ? 0 : 1;
-			_displayFlagVal();
+			displayFlagVal(drawHandler);
 		} else
-			_modifyTemp(type, mode, min, max);
+			modifyTemp(type, mode, min, max, drawHandler);
 	}
 
 	else if (p_type == CHANGE_SAVE) {
@@ -585,13 +623,13 @@ void OMMenuMgr::_edit(OMMenuItem* p_item, MenuChangeType p_type) {
 		}
 
 		m_inEdit = false;
-		_activate(m_curParent, true);
+		activate(m_curParent, exitHandler, drawHandler, true);
 	}
 }
 
 // add a menu level to the history
 
-void OMMenuMgr::_pushHist(OMMenuItem* p_item) {
+void OMMenuMgr::pushHist(OMMenuItem* p_item) {
 	// note that if you have no room left, you'll lose this
 	// item - we only store up to MAXDEPTH
 	for (uint8_t i = 0; i < OM_MENU_MAXDEPTH; i++) {
@@ -604,7 +642,7 @@ void OMMenuMgr::_pushHist(OMMenuItem* p_item) {
 
 // remove the latest menu item from the history and return it
 
-OMMenuItem* OMMenuMgr::_popHist() {
+OMMenuItem* OMMenuMgr::popHist() {
 	// work backwards, remove the first non-zero pointer
 	// and return it
 	for (uint8_t i = OM_MENU_MAXDEPTH; i > 0; i--) {

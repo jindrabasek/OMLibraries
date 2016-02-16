@@ -8,12 +8,14 @@
 #ifndef LIBRARIES_OMMENUMGR_MENUEXITHANDLER_H_
 #define LIBRARIES_OMMENUMGR_MENUEXITHANDLER_H_
 
+#include <Arduino.h>
+
 class MenuExitHandler {
 public:
 	virtual ~MenuExitHandler(){}
 
-	virtual void exitMenu(bool fullExit) =0;
-	virtual void exitMenuPostCallback() =0;
+	virtual void exitMenu(bool fullExit){}
+	virtual void exitMenuPostCallback(){}
 };
 
 #endif /* LIBRARIES_OMMENUMGR_MENUEXITHANDLER_H_ */
