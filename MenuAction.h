@@ -12,7 +12,7 @@ class MenuAction {
 public:
 	virtual ~MenuAction(){}
 
-	virtual void doAction() =0;
+	virtual void doAction(){};
 };
 
 #endif /* LIBRARIES_OMMENUMGR_MENUACTION_H_ */

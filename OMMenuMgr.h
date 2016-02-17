@@ -47,7 +47,7 @@
 #endif
 
 #ifndef OM_MENU_LBLLEN
-    #define OM_MENU_LBLLEN 18
+    #define OM_MENU_LBLLEN 19
 #endif
 
 #ifndef OM_MENU_MAXDEPTH
@@ -136,7 +136,7 @@ struct OMMenuValueFlag {
  */
 
 struct OMMenuItem {
-    const char    label[OM_MENU_COLS] PROGMEM;
+    const char    label[OM_MENU_LBLLEN] PROGMEM;
     uint8_t       type;
     uint8_t       targetCount;
     void*         target;

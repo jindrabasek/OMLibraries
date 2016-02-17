@@ -81,7 +81,7 @@ void OMMenuMgr::handleMenu(Button p_key,
 
 	DBG(m_inMenu);
 
-	if (p_key == BUTTON_SELECT || p_key == BUTTON_FORWARD) {
+	if (p_key == BUTTON_SELECT /* || p_key == BUTTON_FORWARD*/) {
 
 		if (m_inEdit) {
 			edit(m_curSel, CHANGE_SAVE, exitHandler, drawHandler);
@@ -94,6 +94,8 @@ void OMMenuMgr::handleMenu(Button p_key,
 		}
 	} else if (p_key == BUTTON_NONE) {
 		displayList(m_curParent, drawHandler, m_curTarget);
+	}else if (p_key == BUTTON_FORWARD) {
+		// do nothing
 	} else {
 		MenuChangeType changeType =
 				(p_key == BUTTON_INCREASE) ? CHANGE_UP :
@@ -114,6 +116,7 @@ void OMMenuMgr::exitMenu(MenuExitHandler & exitHandler) {
 	m_curTarget = 0;
 
 	m_inMenu = false;
+	DBG (m_inMenu);
 	exitHandler.exitMenu(true);
 	exitHandler.exitMenuPostCallback();
 }
@@ -275,7 +278,7 @@ void OMMenuMgr::displayList(OMMenuItem* p_item, MenuDrawHandler & drawHandler, u
 
 		DBG(childCount);
 
-		display(m_dispBuf, i, startX, OM_MENU_COLS, drawHandler);
+		display(m_dispBuf, i, startX, OM_MENU_COLS - startX, drawHandler);
 
 		DBG(childCount);
 	}
@@ -357,6 +360,12 @@ void OMMenuMgr::displayEdit(OMMenuItem* p_item, MenuDrawHandler & drawHandler) {
 
 	// throw number on-screen
 	displayVoidNum(valPtr, type, 1, 0, drawHandler);
+
+	memset(m_dispBuf, ' ', sizeof(char) * sizeof(m_dispBuf));
+	// clear remaining lines
+	for (byte i = 2; i < OM_MENU_ROWS; i++) {
+		display(m_dispBuf, i, 0, OM_MENU_COLS, drawHandler);
+	}
 
 }
 

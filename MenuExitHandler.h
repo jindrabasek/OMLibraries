@@ -8,7 +8,6 @@
 #ifndef LIBRARIES_OMMENUMGR_MENUEXITHANDLER_H_
 #define LIBRARIES_OMMENUMGR_MENUEXITHANDLER_H_
 
-#include <Arduino.h>
 
 class MenuExitHandler {
 public:
