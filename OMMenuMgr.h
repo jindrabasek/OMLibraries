@@ -37,6 +37,7 @@
 #include "MenuAction.h"
 #include "MenuDrawHandler.h"
 #include "MenuExitHandler.h"
+#include "MenuValueHolder.h"
 
 #ifndef OM_MENU_ROWS
     #define OM_MENU_ROWS    4
@@ -100,7 +101,7 @@ struct OMMenuSelectListItem {
 
 struct OMMenuSelectValue {
         /** Pointer to target variable */
-    uint8_t* targetValue;
+	MenuValueHolder<uint8_t>* targetValue;
     uint8_t listCount;
         /** Void Pointer to list of select items (OMMenuSelectListItem**) */
     void* list;
@@ -110,7 +111,7 @@ struct OMMenuSelectValue {
 
 struct OMMenuValueFlag {
     uint8_t  pos;
-    uint8_t* flag;
+    MenuValueHolder<uint8_t>* flag;
 };
 
 /** Menu Item Type
