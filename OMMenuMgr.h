@@ -48,7 +48,7 @@
 #endif
 
 #ifndef OM_MENU_LBLLEN
-    #define OM_MENU_LBLLEN 19
+    #define OM_MENU_LBLLEN 20
 #endif
 
 #ifndef OM_MENU_MAXDEPTH
@@ -76,6 +76,7 @@
 #define MENU_ITEM           const PROGMEM OMMenuItem
 #define MENU_LIST           const PROGMEM OMMenuItem* const
 #define MENU_VALUE          const PROGMEM OMMenuValue
+#define MENU_VALUE_AND_ACTION const PROGMEM OMMenuValueAndAction
 #define MENU_FLAG           const PROGMEM OMMenuValueFlag
 #define MENU_SELECT_ITEM    const PROGMEM OMMenuSelectListItem
 #define MENU_SELECT_LIST    const PROGMEM OMMenuSelectListItem* const
@@ -83,6 +84,7 @@
 #define MENU_SELECT_SIZE(x) sizeof(x) / sizeof(OMMenuSelectListItem*)
 #define MENU_SIZE(x)        sizeof(x) / sizeof(OMMenuItem*)
 #define MENU_TARGET(x)      const_cast<void*>(reinterpret_cast<const void*>(x))
+
 
 
 /** Select-Type Item
@@ -160,8 +162,13 @@ struct OMMenuValue {
     int     eepromLoc;
 };
 
+struct OMMenuValueAndAction {
+    void*   targetValue;
+    void*   targetAction;
+};
 
-enum  MenuItemType { ITEM_MENU, ITEM_VALUE, ITEM_ACTION, ITEM_SCREEN };
+
+enum  MenuItemType { ITEM_MENU, ITEM_VALUE, ITEM_VALUE_WITH_CALLBACK, ITEM_ACTION, ITEM_SCREEN };
 enum  Button { BUTTON_NONE, BUTTON_FORWARD, BUTTON_BACK, BUTTON_INCREASE, BUTTON_DECREASE, BUTTON_SELECT };
 enum  MenuChangeType { CHANGE_DISPLAY, CHANGE_UP, CHANGE_DOWN, CHANGE_SAVE, CHANGE_ABORT };
 enum  MenuEditType { TYPE_BYTE, TYPE_INT, TYPE_UINT, TYPE_LONG, TYPE_ULONG, TYPE_FLOAT, TYPE_FLOAT_10, TYPE_FLOAT_100, TYPE_FLOAT_1000, TYPE_SELECT,
@@ -943,7 +950,7 @@ private:
     void        activate(OMMenuItem* p_item, MenuExitHandler & exitHandler, MenuDrawHandler & drawHandler, bool p_return = false);
     void        edit(OMMenuItem* p_item, MenuChangeType p_type, MenuExitHandler & exitHandler, MenuDrawHandler & drawHandler);
     void        displayList(OMMenuItem* p_item, MenuDrawHandler & drawHandler, uint8_t p_target = 0);
-    void        displayEdit(OMMenuItem* p_item, MenuDrawHandler & drawHandler);
+    void        displayEdit(OMMenuItem* p_item, MenuDrawHandler & drawHandler, bool withCallback);
     void        menuNav(MenuChangeType p_mode, MenuExitHandler & exitHandler, MenuDrawHandler & drawHandler);
     void        pushHist(OMMenuItem* p_item);
     OMMenuItem* popHist();
@@ -951,9 +958,10 @@ private:
     void        displayVoidNum(void* p_ptr, MenuEditType p_type, int p_row, int p_col, MenuDrawHandler & drawHandler);
     void        modifyTemp(MenuEditType p_type, MenuEditMode p_mode, long p_min, long p_max, MenuDrawHandler & drawHandler);
     void        exitMenu(MenuExitHandler & exitHandler);
-    void        modifySel(OMMenuValue* p_value, MenuEditMode p_mode, MenuDrawHandler & drawHandler);
+    void        modifySel(OMMenuValue* p_value, MenuEditMode p_mode, MenuDrawHandler & drawHandler, bool withCallback);
     void        displaySelVal(OMMenuSelectListItem** p_list, uint8_t p_idx, MenuDrawHandler & drawHandler);
     void        displayFlagVal(MenuDrawHandler & drawHandler);
+    void        clearReaminingLines(MenuDrawHandler & drawHandler);
 
 
 

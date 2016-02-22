@@ -172,9 +172,9 @@ void OMMenuMgr::activate(OMMenuItem* p_item, MenuExitHandler & exitHandler, Menu
 	MenuItemType type = (MenuItemType) pgm_read_byte(&(p_item->type));
 
 	// process activation based on type
-	if (type == ITEM_VALUE) {
+	if (type == ITEM_VALUE || type == ITEM_VALUE_WITH_CALLBACK) {
 		m_inEdit = true;
-		displayEdit(p_item, drawHandler);
+		displayEdit(p_item, drawHandler, type == ITEM_VALUE_WITH_CALLBACK);
 	} else if (type == ITEM_MENU) {
 		// sub-menu
 
@@ -189,8 +189,8 @@ void OMMenuMgr::activate(OMMenuItem* p_item, MenuExitHandler & exitHandler, Menu
 		// this is gnarly, dig? We're pulling a function pointer
 		// out of progmem
 		MenuAction * callback =
-				reinterpret_cast<MenuAction*>(reinterpret_cast<void*>(pgm_read_word(
-						&(p_item->target))));
+				reinterpret_cast<MenuValueHolder<MenuAction>*>(reinterpret_cast<void*>(pgm_read_word(
+						&(p_item->target))))->getValuePtr();
 
 		if (callback != NULL) {
 			callback->doAction();
@@ -205,8 +205,8 @@ void OMMenuMgr::activate(OMMenuItem* p_item, MenuExitHandler & exitHandler, Menu
 		// this is gnarly, dig? We're pulling a function pointer
 		// out of progmem
 		MenuAction * callback =
-				reinterpret_cast<MenuAction*>(reinterpret_cast<void*>(pgm_read_word(
-						&(p_item->target))));
+				reinterpret_cast<MenuValueHolder<MenuAction>*>(reinterpret_cast<void*>(pgm_read_word(
+						&(p_item->target))))->getValuePtr();
 
 		if (callback != NULL) {
 			callback->doAction();
@@ -268,7 +268,7 @@ void OMMenuMgr::displayList(OMMenuItem* p_item, MenuDrawHandler & drawHandler, u
 
 // display a value to be edited
 
-void OMMenuMgr::displayEdit(OMMenuItem* p_item, MenuDrawHandler & drawHandler) {
+void OMMenuMgr::displayEdit(OMMenuItem* p_item, MenuDrawHandler & drawHandler, bool withCallback) {
 
 	// display label
 
@@ -282,7 +282,15 @@ void OMMenuMgr::displayEdit(OMMenuItem* p_item, MenuDrawHandler & drawHandler) {
 					&(p_item->target))));
 
 	MenuEditType type = (MenuEditType) pgm_read_byte(&(value->type));
-	void* valPtr = reinterpret_cast<void*>(pgm_read_word(&(value->targetValue)));
+
+	void* valPtr;
+	if (withCallback) {
+		OMMenuValueAndAction * valueAndAction = reinterpret_cast<OMMenuValueAndAction*>(pgm_read_word(&(value->targetValue)));
+		valPtr = reinterpret_cast<void*>(pgm_read_word(&(valueAndAction->targetValue)));
+	} else {
+		valPtr = reinterpret_cast<void*>(pgm_read_word(&(value->targetValue)));
+	}
+
 
 	void* unwrappedValPtr = NULL;
 
@@ -292,6 +300,8 @@ void OMMenuMgr::displayEdit(OMMenuItem* p_item, MenuDrawHandler & drawHandler) {
 	// be a problem if we decided to use one large variable (ulong) and
 	// then use specific bytes.  This takes more memory, but it seems
 	// a viable trade
+
+	bool numberEdit = true;
 
 	if (type == TYPE_BYTE) {
 		unwrappedValPtr = reinterpret_cast<MenuValueHolder<uint8_t>*>(valPtr)->getValuePtr();
@@ -331,7 +341,7 @@ void OMMenuMgr::displayEdit(OMMenuItem* p_item, MenuDrawHandler & drawHandler) {
 		}
 
 		displaySelVal(list, m_temp, drawHandler);
-		return;
+		numberEdit = false;
 	} else if (type == TYPE_BFLAG) {
 		OMMenuValueFlag* flag = reinterpret_cast<OMMenuValueFlag*>(valPtr);
 		unwrappedValPtr = valPtr;
@@ -345,21 +355,22 @@ void OMMenuMgr::displayEdit(OMMenuItem* p_item, MenuDrawHandler & drawHandler) {
 			m_temp = 0;
 
 		displayFlagVal(drawHandler);
-		return;
+		numberEdit = false;
 	} else if (type >= TYPE_FLOAT) { // always run as last check
 		unwrappedValPtr = reinterpret_cast<MenuValueHolder<float>*>(valPtr)->getValuePtr();
 		m_tempF = *reinterpret_cast<MenuValueHolder<float>*>(valPtr)->getValuePtr();
 	}
 
-	// throw number on-screen
-	displayVoidNum(unwrappedValPtr, type, 1, 0, drawHandler);
+	if (numberEdit) {
+		// throw number on-screen
+		displayVoidNum(unwrappedValPtr, type, 1, 0, drawHandler);
+	}
 
 	memset(m_dispBuf, ' ', sizeof(char) * sizeof(m_dispBuf));
 	// clear remaining lines
 	for (byte i = 2; i < OM_MENU_ROWS; i++) {
 		display(m_dispBuf, i, 0, OM_MENU_COLS, drawHandler);
 	}
-
 }
 
 // rationalize a way to display any sort of number as a char*, rationalize it buddy, rationalize it good...
@@ -481,10 +492,18 @@ void OMMenuMgr::displaySelVal(OMMenuSelectListItem** p_list, uint8_t p_idx, Menu
 // modifying a select type value - we cycle through a list of
 // values by cycling list index...
 
-void OMMenuMgr::modifySel(OMMenuValue* p_value, MenuEditMode p_mode, MenuDrawHandler & drawHandler) {
+void OMMenuMgr::modifySel(OMMenuValue* p_value, MenuEditMode p_mode, MenuDrawHandler & drawHandler, bool withCallback) {
 
-	OMMenuSelectValue* sel = reinterpret_cast<OMMenuSelectValue*>(pgm_read_word(
-			&(p_value->targetValue)));
+	OMMenuSelectValue* sel;
+	if (withCallback) {
+		OMMenuValueAndAction * valueAndAction = reinterpret_cast<OMMenuValueAndAction*>(pgm_read_word(&(p_value->targetValue)));
+		sel = reinterpret_cast<OMMenuSelectValue*>(pgm_read_word(
+				&(valueAndAction->targetValue)));
+	} else {
+		sel = reinterpret_cast<OMMenuSelectValue*>(pgm_read_word(
+				&(p_value->targetValue)));
+	}
+
 	uint8_t count = pgm_read_byte(&(sel->listCount));
 	OMMenuSelectListItem** list =
 			reinterpret_cast<OMMenuSelectListItem**>(reinterpret_cast<void*>(pgm_read_word(
@@ -530,6 +549,10 @@ void OMMenuMgr::displayFlagVal(MenuDrawHandler & drawHandler) {
 
 void OMMenuMgr::edit(OMMenuItem* p_item, MenuChangeType p_type, MenuExitHandler & exitHandler, MenuDrawHandler & drawHandler) {
 
+	// get item type
+	MenuItemType itemType = (MenuItemType) pgm_read_byte(&(p_item->type));
+	bool withCallback = itemType == ITEM_VALUE_WITH_CALLBACK;
+
 	OMMenuValue* thisValue = reinterpret_cast<OMMenuValue*>(pgm_read_word(
 			&(p_item->target)));
 
@@ -546,7 +569,7 @@ void OMMenuMgr::edit(OMMenuItem* p_item, MenuChangeType p_type, MenuExitHandler 
 
 	else if (p_type == CHANGE_UP || p_type == CHANGE_DOWN) {
 		if (type == TYPE_SELECT) {
-			modifySel(thisValue, mode, drawHandler);
+			modifySel(thisValue, mode, drawHandler, withCallback);
 		} else if (type == TYPE_BFLAG) {
 			m_temp = (m_temp == 1) ? 0 : 1;
 			displayFlagVal(drawHandler);
@@ -556,8 +579,13 @@ void OMMenuMgr::edit(OMMenuItem* p_item, MenuChangeType p_type, MenuExitHandler 
 
 	else if (p_type == CHANGE_SAVE) {
 
-		void* ptr = reinterpret_cast<void*>(pgm_read_word(
-				&(thisValue->targetValue)));
+		void* ptr;
+		if (withCallback) {
+			OMMenuValueAndAction * valueAndAction = reinterpret_cast<OMMenuValueAndAction*>(pgm_read_word(&(thisValue->targetValue)));
+			ptr = reinterpret_cast<void*>(pgm_read_word(&(valueAndAction->targetValue)));
+		} else {
+			ptr = reinterpret_cast<void*>(pgm_read_word(&(thisValue->targetValue)));
+		}
 
 		if (type == TYPE_SELECT) {
 			// select is more special than the rest, dig?
@@ -612,6 +640,17 @@ void OMMenuMgr::edit(OMMenuItem* p_item, MenuChangeType p_type, MenuExitHandler 
 		} else if (type >= TYPE_FLOAT) {
 			*reinterpret_cast<MenuValueHolder<float>*>(ptr)->getValuePtr() = m_tempF;
 			_eewrite<float>(thisValue, *reinterpret_cast<MenuValueHolder<float>*>(ptr)->getValuePtr());
+		}
+
+		if (withCallback) {
+			OMMenuValueAndAction * valueAndAction = reinterpret_cast<OMMenuValueAndAction*>(pgm_read_word(&(thisValue->targetValue)));
+			MenuAction * callback =
+							reinterpret_cast<MenuValueHolder<MenuAction>*>(reinterpret_cast<void*>(pgm_read_word(
+									&(valueAndAction->targetAction))))->getValuePtr();
+
+			if (callback != NULL) {
+				callback->doAction();
+			}
 		}
 
 		m_inEdit = false;
