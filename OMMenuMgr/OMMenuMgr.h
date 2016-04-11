@@ -27,17 +27,13 @@
 #ifndef	OM_MENUMGR_H
 #define OM_MENUMGR_H
 
-#include <Arduino.h>
-#include <inttypes.h>
 #include <avr/pgmspace.h>
-#include <stdlib.h>
-
+#include <MenuDrawHandler.h>
+#include <MenuExitHandler.h>
+#include <MenuValueHolder.h>
 #include <OMEEPROM.h>
-
-#include "MenuAction.h"
-#include "MenuDrawHandler.h"
-#include "MenuExitHandler.h"
-#include "MenuValueHolder.h"
+#include <stdbool.h>
+#include <stdint.h>
 
 #ifndef OM_MENU_ROWS
 #define OM_MENU_ROWS    4

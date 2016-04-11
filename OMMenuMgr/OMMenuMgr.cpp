@@ -24,8 +24,16 @@
 
  */
 
-#include "OMMenuMgr.h"
-#include "MenuValueHolder.h"
+#include <avr/pgmspace.h>
+#include <Arduino.h>
+#include <MenuAction.h>
+#include <MenuDrawHandler.h>
+#include <MenuExitHandler.h>
+#include <MenuValueHolder.h>
+#include <OMMenuMgr.h>
+#include <stdbool.h>
+#include <stdlib.h>
+#include <string.h>
 
 /** Constructor
 

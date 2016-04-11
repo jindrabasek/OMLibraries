@@ -8,6 +8,8 @@
 #ifndef LIBRARIES_OMMENUMGR_MENUEXITHANDLER_H_
 #define LIBRARIES_OMMENUMGR_MENUEXITHANDLER_H_
 
+#include <stdbool.h>
+
 class MenuExitHandler {
 public:
     virtual ~MenuExitHandler() {
