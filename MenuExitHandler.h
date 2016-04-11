@@ -8,13 +8,15 @@
 #ifndef LIBRARIES_OMMENUMGR_MENUEXITHANDLER_H_
 #define LIBRARIES_OMMENUMGR_MENUEXITHANDLER_H_
 
-
 class MenuExitHandler {
 public:
-	virtual ~MenuExitHandler(){}
+    virtual ~MenuExitHandler() {
+    }
 
-	virtual void exitMenu(bool fullExit){}
-	virtual void exitMenuPostCallback(){}
+    virtual void exitMenu(bool fullExit) {
+    }
+    virtual void exitMenuPostCallback() {
+    }
 };
 
 #endif /* LIBRARIES_OMMENUMGR_MENUEXITHANDLER_H_ */

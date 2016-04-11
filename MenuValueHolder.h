@@ -10,19 +10,21 @@
 
 #include <stddef.h>
 
-template <class T> class MenuValueHolder {
+template<class T> class MenuValueHolder {
 private:
-	T * value;
+    T * value;
 public:
-	MenuValueHolder() : value(NULL){}
+    MenuValueHolder() :
+            value(NULL) {
+    }
 
-	T * getValuePtr() {
-		return value;
-	}
+    T * getValuePtr() {
+        return value;
+    }
 
-	void setValuePtr(T * value) {
-		this->value = value;
-	}
+    void setValuePtr(T * value) {
+        this->value = value;
+    }
 };
 
 #endif /* LIBRARIES_OMMENUMGR_MENUVALUEHOLDER_H_ */

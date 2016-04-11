@@ -40,38 +40,36 @@
 #include "MenuValueHolder.h"
 
 #ifndef OM_MENU_ROWS
-    #define OM_MENU_ROWS    4
+#define OM_MENU_ROWS    4
 #endif
 
 #ifndef OM_MENU_COLS
-    #define OM_MENU_COLS    20
+#define OM_MENU_COLS    20
 #endif
 
 #ifndef OM_MENU_LBLLEN
-    #define OM_MENU_LBLLEN 20
+#define OM_MENU_LBLLEN 20
 #endif
 
 #ifndef OM_MENU_MAXDEPTH
-    #define OM_MENU_MAXDEPTH    3
+#define OM_MENU_MAXDEPTH    3
 #endif
 
 #ifndef OM_MENU_CURSOR
-    #define OM_MENU_CURSOR ">"
+#define OM_MENU_CURSOR ">"
 #endif
 
 #ifndef OM_MENU_NOCURSOR
-    #define OM_MENU_NOCURSOR " "
+#define OM_MENU_NOCURSOR " "
 #endif
 
 #ifndef OM_MENU_FLAG_ON
-    #define OM_MENU_FLAG_ON "On"
+#define OM_MENU_FLAG_ON "On"
 #endif
 
 #ifndef OM_MENU_FLAG_OFF
-    #define OM_MENU_FLAG_OFF "Off"
+#define OM_MENU_FLAG_OFF "Off"
 #endif
-
-
 
 #define MENU_ITEM           const PROGMEM OMMenuItem
 #define MENU_LIST           const PROGMEM OMMenuItem* const
@@ -85,46 +83,40 @@
 #define MENU_SIZE(x)        sizeof(x) / sizeof(OMMenuItem*)
 #define MENU_TARGET(x)      const_cast<void*>(reinterpret_cast<const void*>(x))
 
-
-
 /** Select-Type Item
 
  Item to be added to a list for OMSelectValue
  */
 struct OMMenuSelectListItem {
-    uint8_t   value;
+    uint8_t value;
     const char label[OM_MENU_LBLLEN] PROGMEM;
 };
-
-
 
 /** Select-Type Target Value
  */
 
 struct OMMenuSelectValue {
-        /** Pointer to target variable */
-	MenuValueHolder<uint8_t>* targetValue;
+    /** Pointer to target variable */
+    MenuValueHolder<uint8_t>* targetValue;
     uint8_t listCount;
-        /** Void Pointer to list of select items (OMMenuSelectListItem**) */
+    /** Void Pointer to list of select items (OMMenuSelectListItem**) */
     void* list;
 };
 
-
-
 struct OMMenuValueFlag {
-    uint8_t  pos;
+    uint8_t pos;
     MenuValueHolder<uint8_t>* flag;
 };
 
 /** Menu Item Type
 
-  Defines a menu item. Stored in PROGMEM
+ Defines a menu item. Stored in PROGMEM
 
  label is the label to be displayed for the item.
 
  type can be one of:
 
-  ITEM_MENU, ITEM_VALUE, ITEM_ACTION
+ ITEM_MENU, ITEM_VALUE, ITEM_ACTION
 
  If type is ITEM_MENU, then targetCount will be the
  count of menu items in the menu, and target will be
@@ -139,12 +131,11 @@ struct OMMenuValueFlag {
  */
 
 struct OMMenuItem {
-    const char    label[OM_MENU_LBLLEN] PROGMEM;
-    uint8_t       type;
-    uint8_t       targetCount;
-    void*         target;
+    const char label[OM_MENU_LBLLEN] PROGMEM;
+    uint8_t type;
+    uint8_t targetCount;
+    void* target;
 };
-
 
 /** Menu Value
 
@@ -156,28 +147,47 @@ struct OMMenuItem {
  */
 struct OMMenuValue {
     uint8_t type;
-    long    max;
-    long    min;
-    void*   targetValue;
-    int     eepromLoc;
+    long max;
+    long min;
+    void* targetValue;
+    int eepromLoc;
 };
 
 struct OMMenuValueAndAction {
-    void*   targetValue;
-    void*   targetAction;
+    void* targetValue;
+    void* targetAction;
 };
 
-
-enum  MenuItemType { ITEM_MENU, ITEM_VALUE, ITEM_VALUE_WITH_CALLBACK, ITEM_ACTION, ITEM_SCREEN };
-enum  Button { BUTTON_NONE, BUTTON_FORWARD, BUTTON_BACK, BUTTON_INCREASE, BUTTON_DECREASE, BUTTON_SELECT };
-enum  MenuChangeType { CHANGE_DISPLAY, CHANGE_UP, CHANGE_DOWN, CHANGE_SAVE, CHANGE_ABORT };
-enum  MenuEditType { TYPE_BYTE, TYPE_INT, TYPE_UINT, TYPE_LONG, TYPE_ULONG, TYPE_FLOAT, TYPE_FLOAT_10, TYPE_FLOAT_100, TYPE_FLOAT_1000, TYPE_SELECT,
-                 TYPE_BFLAG };
-enum  MenuEditMode { MODE_INCREMENT, MODE_DECREMENT, MODE_NOOP };
-
-
-
-
+enum MenuItemType {
+    ITEM_MENU, ITEM_VALUE, ITEM_VALUE_WITH_CALLBACK, ITEM_ACTION, ITEM_SCREEN
+};
+enum Button {
+    BUTTON_NONE,
+    BUTTON_FORWARD,
+    BUTTON_BACK,
+    BUTTON_INCREASE,
+    BUTTON_DECREASE,
+    BUTTON_SELECT
+};
+enum MenuChangeType {
+    CHANGE_DISPLAY, CHANGE_UP, CHANGE_DOWN, CHANGE_SAVE, CHANGE_ABORT
+};
+enum MenuEditType {
+    TYPE_BYTE,
+    TYPE_INT,
+    TYPE_UINT,
+    TYPE_LONG,
+    TYPE_ULONG,
+    TYPE_FLOAT,
+    TYPE_FLOAT_10,
+    TYPE_FLOAT_100,
+    TYPE_FLOAT_1000,
+    TYPE_SELECT,
+    TYPE_BFLAG
+};
+enum MenuEditMode {
+    MODE_INCREMENT, MODE_DECREMENT, MODE_NOOP
+};
 
 /** OpenMoCo Menu Manager Class
 
@@ -192,22 +202,22 @@ enum  MenuEditMode { MODE_INCREMENT, MODE_DECREMENT, MODE_NOOP };
 
  Key features:<br>
  <ul>
-    <li>Menu structures automatically and easily stored in program memory instead of SRAM</li>
-    <li>Automatic handling of either analog or digital button inputs</li>
-    <li>Automatic management of user inputs for numeric and select list types</li>
-    <ul>
-        <li>In-place editing with ability for user to abort</li>
-        <li>Write-back on user save to original variables</li>
-        <li>Specify lists of display values for users to select between</li>
-        <li>Control over user input precision in floats, and more</li>
-    </ul>
-    <li>Ability to trigger code actions from menu items</li>
-    <li>One-method polling automatically handles and executes menu as-needed</li>
-    <li>Streamlined setup for complex and even recursive menus</li>
-    <li>Support for any width screen</li>
-    <li>Reduced memory footprint</li>
-    <li>No fixed limitations on menu depths, have as many sub-menus as you require</li>
-    <li>Flexible drawing methodology allows the user of any character-based (or even graphic) display</li>
+ <li>Menu structures automatically and easily stored in program memory instead of SRAM</li>
+ <li>Automatic handling of either analog or digital button inputs</li>
+ <li>Automatic management of user inputs for numeric and select list types</li>
+ <ul>
+ <li>In-place editing with ability for user to abort</li>
+ <li>Write-back on user save to original variables</li>
+ <li>Specify lists of display values for users to select between</li>
+ <li>Control over user input precision in floats, and more</li>
+ </ul>
+ <li>Ability to trigger code actions from menu items</li>
+ <li>One-method polling automatically handles and executes menu as-needed</li>
+ <li>Streamlined setup for complex and even recursive menus</li>
+ <li>Support for any width screen</li>
+ <li>Reduced memory footprint</li>
+ <li>No fixed limitations on menu depths, have as many sub-menus as you require</li>
+ <li>Flexible drawing methodology allows the user of any character-based (or even graphic) display</li>
  </ul>
 
  @author
@@ -278,24 +288,24 @@ enum  MenuEditMode { MODE_INCREMENT, MODE_DECREMENT, MODE_NOOP };
  it is, the length (for certain types), and the target of the item.  For example:
 
  @code
-                //        LABEL           TYPE        LENGTH    TARGET
+ //        LABEL           TYPE        LENGTH    TARGET
  MENU_ITEM item_foo  = { {"Foo Edit"},    ITEM_VALUE,  0,        MENU_TARGET(&value_foo) };
  @endcode
 
  There are three cores types of items:
  <ul>
-    <li>ITEM_VALUE</li>
-    <ul>
-        <li>A value to be edited, which will either be a numeric type or a select list</li>
-    </ul>
-    <li>ITEM_ACTION</li>
-    <ul>
-        <li>An action to be executed when the user hits enter or forward on the item</li>
-    </ul>
-    <li>ITEM_MENU</li>
-    <ul>
-        <li>A sub-menu to be displayed when the user hits enter or forward on the item</li>
-    </ul>
+ <li>ITEM_VALUE</li>
+ <ul>
+ <li>A value to be edited, which will either be a numeric type or a select list</li>
+ </ul>
+ <li>ITEM_ACTION</li>
+ <ul>
+ <li>An action to be executed when the user hits enter or forward on the item</li>
+ </ul>
+ <li>ITEM_MENU</li>
+ <ul>
+ <li>A sub-menu to be displayed when the user hits enter or forward on the item</li>
+ </ul>
  </ul>
 
  To create a value item, we must also create a special variables which tells the menu system
@@ -306,10 +316,10 @@ enum  MenuEditMode { MODE_INCREMENT, MODE_DECREMENT, MODE_NOOP };
 
  byte foo = 0;
 
-                 //       Data Type        Max    Min    Target
+ //       Data Type        Max    Min    Target
  MENU_VALUE value_foo = { TYPE_BYTE,       100,   0,     MENU_TARGET(&foo) };
 
-                 //        LABEL           TYPE        LENGTH    TARGET
+ //        LABEL           TYPE        LENGTH    TARGET
  MENU_ITEM item_foo  = { {"Foo Edit"},    ITEM_VALUE,  0,        MENU_TARGET(&value_foo) };
  @endcode
 
@@ -320,29 +330,29 @@ enum  MenuEditMode { MODE_INCREMENT, MODE_DECREMENT, MODE_NOOP };
  The following Data Type values are allowed:
 
  <ul>
-    <li>TYPE_BYTE</li>
-    <li>TYPE_INT</li>
-    <li>TYPE_UINT</li>
-    <li>TYPE_LONG</li>
-    <li>TYPE_ULONG</li>
-    <li>TYPE_FLOAT</li>
-    <ul>
-        <li>Whole integer changes, zero decimal precision per change</li>
-    </ul>
-    <li>TYPE_FLOAT_10</li>
-    <ul>
-        <li>Change by tenths</li>
-    </ul>
-    <li>TYPE_FLOAT_100</li>
-    <ul>
-        <li>Change by hundredths</li>
-    </ul>
-    <li>TYPE_FLOAT_1000</li>
-    <ul>
-        <li>Change by thousandths</li>
-    </ul>
-    <li>TYPE_SELECT</li>
-    <li>TYPE_BFLAG</li>
+ <li>TYPE_BYTE</li>
+ <li>TYPE_INT</li>
+ <li>TYPE_UINT</li>
+ <li>TYPE_LONG</li>
+ <li>TYPE_ULONG</li>
+ <li>TYPE_FLOAT</li>
+ <ul>
+ <li>Whole integer changes, zero decimal precision per change</li>
+ </ul>
+ <li>TYPE_FLOAT_10</li>
+ <ul>
+ <li>Change by tenths</li>
+ </ul>
+ <li>TYPE_FLOAT_100</li>
+ <ul>
+ <li>Change by hundredths</li>
+ </ul>
+ <li>TYPE_FLOAT_1000</li>
+ <ul>
+ <li>Change by thousandths</li>
+ </ul>
+ <li>TYPE_SELECT</li>
+ <li>TYPE_BFLAG</li>
  </ul>
 
  @section menulists The Basics of Creating Menus
@@ -389,7 +399,7 @@ enum  MenuEditMode { MODE_INCREMENT, MODE_DECREMENT, MODE_NOOP };
  @code
  byte myVar = 0;
 
-                           // TARGET VAR        LENGTH                          TARGET SELECT LIST
+ // TARGET VAR        LENGTH                          TARGET SELECT LIST
  MENU_SELECT state_select = { &myVar,           MENU_SELECT_SIZE(state_list),   MENU_TARGET(&state_list) };
 
  MENU_VALUE  value_sel = { TYPE_SELECT, 0, 0, MENU_TARGET(&state_select) };
@@ -442,19 +452,19 @@ enum  MenuEditMode { MODE_INCREMENT, MODE_DECREMENT, MODE_NOOP };
  ...
 
  void uiQwkScreen() {
-    lcd.clear();
-    Menu.enable(false);
+ lcd.clear();
+ Menu.enable(false);
 
-    lcd.print("Action!");
-    lcd.setCursor(0, 1);
-    lcd.print("Enter 2 return");
+ lcd.print("Action!");
+ lcd.setCursor(0, 1);
+ lcd.print("Enter 2 return");
 
-    while( Menu.checkInput() != BUTTON_SELECT ) {
-        ; // wait!
-    }
+ while( Menu.checkInput() != BUTTON_SELECT ) {
+ ; // wait!
+ }
 
-    Menu.enable(true);
-    lcd.clear();
+ Menu.enable(true);
+ lcd.clear();
  }
  @endcode
 
@@ -486,10 +496,10 @@ enum  MenuEditMode { MODE_INCREMENT, MODE_DECREMENT, MODE_NOOP };
 
  @code
  int map = {
-             { button 1 read, button 1 definition },
-             { button 2 read, button 2 definition },
-            ...
-           };
+ { button 1 read, button 1 definition },
+ { button 2 read, button 2 definition },
+ ...
+ };
  @endcode
 
  The button definition is always one of the following:
@@ -527,12 +537,12 @@ enum  MenuEditMode { MODE_INCREMENT, MODE_DECREMENT, MODE_NOOP };
 
  // mapping of analog button values for menu
  const int BUT_MAP[5][2] = {
-                                {BUTSEL_VAL, BUTTON_SELECT},
-                                {BUTINC_VAL, BUTTON_INCREASE},
-                                {BUTDEC_VAL, BUTTON_DECREASE},
-                                {BUTREV_VAL, BUTTON_BACK},
-                                {BUTFWD_VAL, BUTTON_FORWARD}
-                            };
+ {BUTSEL_VAL, BUTTON_SELECT},
+ {BUTINC_VAL, BUTTON_INCREASE},
+ {BUTDEC_VAL, BUTTON_DECREASE},
+ {BUTREV_VAL, BUTTON_BACK},
+ {BUTFWD_VAL, BUTTON_FORWARD}
+ };
 
 
 
@@ -540,9 +550,9 @@ enum  MenuEditMode { MODE_INCREMENT, MODE_DECREMENT, MODE_NOOP };
 
  void setup() {
 
-   ...
+ ...
 
-     Menu.setAnalogButtonPin(BUT_PIN, BUT_MAP, BUT_THRESH);
+ Menu.setAnalogButtonPin(BUT_PIN, BUT_MAP, BUT_THRESH);
  }
  @endcode
 
@@ -560,7 +570,7 @@ enum  MenuEditMode { MODE_INCREMENT, MODE_DECREMENT, MODE_NOOP };
  @code
  void loop() {
 
-    Menu.checkInput();
+ Menu.checkInput();
 
  }
  @endcode
@@ -571,24 +581,24 @@ enum  MenuEditMode { MODE_INCREMENT, MODE_DECREMENT, MODE_NOOP };
  @code
  void loop() {
 
-    if( hideMenu ) {
-        Menu.enable(false);
-        hideMenu = false;
-    }
+ if( hideMenu ) {
+ Menu.enable(false);
+ hideMenu = false;
+ }
 
-    byte button = Menu.checkInput();
+ byte button = Menu.checkInput();
 
-    if( ! Menu.enable() ) {
-        // menu is disabled
+ if( ! Menu.enable() ) {
+ // menu is disabled
 
-        if( button == BUTTON_SELECT ) {
-            // do something!
-        }
-        else if( button == BUTTON_FORWARD ) {
-            // re-enable Menu
-            Menu.enable(true);
-        }
-    }
+ if( button == BUTTON_SELECT ) {
+ // do something!
+ }
+ else if( button == BUTTON_FORWARD ) {
+ // re-enable Menu
+ Menu.enable(true);
+ }
+ }
 
  }
  @endcode
@@ -617,23 +627,23 @@ enum  MenuEditMode { MODE_INCREMENT, MODE_DECREMENT, MODE_NOOP };
  @code
  void setup() {
 
-   ...
+ ...
 
-     Menu.setDrawHandler(uiDraw);
+ Menu.setDrawHandler(uiDraw);
  }
 
 
  ...
 
  void uiDraw(char* p_text, int p_row, int p_col, int len) {
-    lcd.setCursor(p_col, p_row);
+ lcd.setCursor(p_col, p_row);
 
-    for( int i = 0; i < len; i++ ) {
-        if( p_text[i] < '!' || p_text[i] > '~' )
-            lcd.write(' ');
-        else
-            lcd.write(p_text[i]);
-    }
+ for( int i = 0; i < len; i++ ) {
+ if( p_text[i] < '!' || p_text[i] > '~' )
+ lcd.write(' ');
+ else
+ lcd.write(p_text[i]);
+ }
  }
  @endcode
 
@@ -648,9 +658,9 @@ enum  MenuEditMode { MODE_INCREMENT, MODE_DECREMENT, MODE_NOOP };
  @code
  void uiExit() {
 
-    lcd.clear();
-    lcd.setCursor(0, 0);
-    lcd.print("Enter for Menu");
+ lcd.clear();
+ lcd.setCursor(0, 0);
+ lcd.print("Enter for Menu");
  }
  @endcode
 
@@ -664,56 +674,56 @@ enum  MenuEditMode { MODE_INCREMENT, MODE_DECREMENT, MODE_NOOP };
  edit the library directly.
 
  <ul>
-    <li>OM_MENU_ROWS</li>
-    <ul>
-        <li>Default = 2</li>
-        <li>Number of rows in the display, minimum is 2</li>
-    </ul>
-    <li>OM_MENU_COLS</li>
-    <ul>
-        <li>Default = 16</li>
-        <li>Number of columns (character width) in the display.  This also controls the maximum length of any label for a menu item</li>
-    </ul>
-    <li>OM_MENU_LBLLEN</li>
-    <ul>
-        <li>Default = OM_MENU_COLS</li>
-        <li>Maximum length of a select label, this can be used to reduce flash usage when only short labels are needed</li>
-    </ul>
-    <li>OM_MENU_MAXDEPTH</li>
-    <ul>
-        <li>Default = 3</li>
-        <li>Maximum nested depth of menus.  You can go deeper than this, but menu history will not be retained below this level.</li>
-    </ul>
-    <li>OM_MENU_DEBOUNCE</li>
-    <ul>
-        <li>Default = 120</li>
-        <li>Debounce time for button input, in mS</li>
-    </ul>
-    <li>OM_MENU_CURSOR</li>
-    <ul>
-        <li>Default = ">"</li>
-        <li>Cursor to show for current item selection</li>
-    </ul>
-    <li>OM_MENU_NOCURSOR</li>
-    <ul>
-        <li>Default = " "</li>
-        <li>Cursor to show for displayed items not currently selected</li>
-    </ul>
-    <li>OM_MENU_USE_EEPROM</li>
-    <ul>
-        <li>Default = Not Defined</li>
-        <li>Support automatic writing of variables to EEPROM via OMEEPROM library.  For more info, see the \ref menueeprom "Automating EEPROM Writes" section below.</li>
-    </ul>
-    <li>OM_MENU_FLAG_ON</li>
-    <ul>
-        <li>Default = "On"</li>
-        <li>The string to be displayed to the user for bit flag values where the flag is turned on</li>
-    </ul>
-    <li>OM_MENU_FLAG_OFF</li>
-    <ul>
-        <li>Default = "Off"</li>
-        <li>The string to be displayed to the user for bit flag values where the flag is turned off</li>
-    </ul>
+ <li>OM_MENU_ROWS</li>
+ <ul>
+ <li>Default = 2</li>
+ <li>Number of rows in the display, minimum is 2</li>
+ </ul>
+ <li>OM_MENU_COLS</li>
+ <ul>
+ <li>Default = 16</li>
+ <li>Number of columns (character width) in the display.  This also controls the maximum length of any label for a menu item</li>
+ </ul>
+ <li>OM_MENU_LBLLEN</li>
+ <ul>
+ <li>Default = OM_MENU_COLS</li>
+ <li>Maximum length of a select label, this can be used to reduce flash usage when only short labels are needed</li>
+ </ul>
+ <li>OM_MENU_MAXDEPTH</li>
+ <ul>
+ <li>Default = 3</li>
+ <li>Maximum nested depth of menus.  You can go deeper than this, but menu history will not be retained below this level.</li>
+ </ul>
+ <li>OM_MENU_DEBOUNCE</li>
+ <ul>
+ <li>Default = 120</li>
+ <li>Debounce time for button input, in mS</li>
+ </ul>
+ <li>OM_MENU_CURSOR</li>
+ <ul>
+ <li>Default = ">"</li>
+ <li>Cursor to show for current item selection</li>
+ </ul>
+ <li>OM_MENU_NOCURSOR</li>
+ <ul>
+ <li>Default = " "</li>
+ <li>Cursor to show for displayed items not currently selected</li>
+ </ul>
+ <li>OM_MENU_USE_EEPROM</li>
+ <ul>
+ <li>Default = Not Defined</li>
+ <li>Support automatic writing of variables to EEPROM via OMEEPROM library.  For more info, see the \ref menueeprom "Automating EEPROM Writes" section below.</li>
+ </ul>
+ <li>OM_MENU_FLAG_ON</li>
+ <ul>
+ <li>Default = "On"</li>
+ <li>The string to be displayed to the user for bit flag values where the flag is turned on</li>
+ </ul>
+ <li>OM_MENU_FLAG_OFF</li>
+ <ul>
+ <li>Default = "Off"</li>
+ <li>The string to be displayed to the user for bit flag values where the flag is turned off</li>
+ </ul>
  </ul>
 
 
@@ -756,222 +766,227 @@ enum  MenuEditMode { MODE_INCREMENT, MODE_DECREMENT, MODE_NOOP };
  The following is a complete example of a sketch with a menu:
 
  @code
-#include "OMMenuMgr.h"
-#include <LiquidCrystal.h>
+ #include "OMMenuMgr.h"
+ #include <LiquidCrystal.h>
 
 
-// lcd pins
-const byte LCD_RS  = 17;
-const byte LCD_EN  = 18;
-const byte LCD_D4  = 11;
-const byte LCD_D5  = 8;
-const byte LCD_D6  = 7;
-const byte LCD_D7  = 4;
+ // lcd pins
+ const byte LCD_RS  = 17;
+ const byte LCD_EN  = 18;
+ const byte LCD_D4  = 11;
+ const byte LCD_D5  = 8;
+ const byte LCD_D6  = 7;
+ const byte LCD_D7  = 4;
 
 
-const byte LCD_ROWS = 2;
-const byte LCD_COLS = 16;
+ const byte LCD_ROWS = 2;
+ const byte LCD_COLS = 16;
 
-// button values
+ // button values
 
-// which input is our button
-const byte BUT_PIN = 14;
+ // which input is our button
+ const byte BUT_PIN = 14;
 
-// analog button read values
-const int BUTSEL_VAL  = 70;
-const int BUTFWD_VAL  = 250;
-const int BUTREV_VAL  = 450;
-const int BUTDEC_VAL  = 655;
-const int BUTINC_VAL  = 830;
+ // analog button read values
+ const int BUTSEL_VAL  = 70;
+ const int BUTFWD_VAL  = 250;
+ const int BUTREV_VAL  = 450;
+ const int BUTDEC_VAL  = 655;
+ const int BUTINC_VAL  = 830;
 
-const byte BUT_THRESH  = 60;
+ const byte BUT_THRESH  = 60;
 
-// mapping of analog button values for menu
-const int BUT_MAP[5][2] = {
-    {BUTFWD_VAL, BUTTON_FORWARD},
-    {BUTINC_VAL, BUTTON_INCREASE},
-    {BUTDEC_VAL, BUTTON_DECREASE},
-    {BUTREV_VAL, BUTTON_BACK},
-    {BUTSEL_VAL, BUTTON_SELECT}
-};
-
-
-
-// ====== Test Menu ===========
-
-byte foo = 0;
-byte sel = 0;
-unsigned int bar = 1;
-long baz  = 0;
-float bak = 0.0;
-
-// Create a list of states and values for a select input
-MENU_SELECT_ITEM  sel_ign = { 2, {"Ignore"} };
-MENU_SELECT_ITEM  sel_on  = { 1, {"On"} };
-MENU_SELECT_ITEM  sel_off = { 0, {"Off"} };
-
-MENU_SELECT_LIST  state_list[] = { &sel_ign, &sel_on, &sel_off };
-
-// the special target for our state input
-
-// TARGET VAR   LENGTH                          TARGET SELECT LIST
-MENU_SELECT state_select = { &sel,           MENU_SELECT_SIZE(state_list),   MENU_TARGET(&state_list) };
-
-// values to use
-
-//    TYPE            MAX    MIN    TARGET
-MENU_VALUE foo_value = { TYPE_BYTE,       100,   0,     MENU_TARGET(&foo) };
-MENU_VALUE bar_value = { TYPE_UINT,       10000, 100,   MENU_TARGET(&bar) };
-MENU_VALUE baz_value = { TYPE_LONG,       10000, 1,     MENU_TARGET(&baz) };
-MENU_VALUE bak_value = { TYPE_FLOAT_1000, 0,     0,     MENU_TARGET(&bak) };
-MENU_VALUE sel_value = { TYPE_SELECT,     0,     0,     MENU_TARGET(&state_select) };
-
-//        LABEL           TYPE        LENGTH    TARGET
-MENU_ITEM item_checkme  = { {"Byte Edit"},    ITEM_VALUE,  0,        MENU_TARGET(&foo_value) };
-MENU_ITEM item_barme    = { {"UInt Edit"},     ITEM_VALUE,  0,        MENU_TARGET(&bar_value) };
-MENU_ITEM item_bazme    = { {"Long Edit"},    ITEM_VALUE,  0,        MENU_TARGET(&baz_value) };
-MENU_ITEM item_bakme    = { {"Float Edit"},   ITEM_VALUE,  0,        MENU_TARGET(&bak_value) };
-MENU_ITEM item_state    = { {"Select Input"}, ITEM_VALUE,  0,        MENU_TARGET(&sel_value) };
-MENU_ITEM item_testme   = { {"Test Action"},  ITEM_ACTION, 0,        MENU_TARGET(uiQwkScreen) };
-
-//        List of items in menu level
-MENU_LIST root_list[]   = { &item_checkme, &item_barme, &item_bazme, &item_bakme, &item_state, &item_testme };
-
-// Root item is always created last, so we can add all other items to it
-MENU_ITEM menu_root     = { {"Root"},        ITEM_MENU,   MENU_SIZE(root_list),    MENU_TARGET(&root_list) };
-
-
-// initialize LCD object
-LiquidCrystal lcd(LCD_RS, LCD_EN, LCD_D4, LCD_D5, LCD_D6, LCD_D7);
-
-OMMenuMgr Menu(&menu_root);
+ // mapping of analog button values for menu
+ const int BUT_MAP[5][2] = {
+ {BUTFWD_VAL, BUTTON_FORWARD},
+ {BUTINC_VAL, BUTTON_INCREASE},
+ {BUTDEC_VAL, BUTTON_DECREASE},
+ {BUTREV_VAL, BUTTON_BACK},
+ {BUTSEL_VAL, BUTTON_SELECT}
+ };
 
 
 
-void uiMenuSetup() {
+ // ====== Test Menu ===========
 
-    lcd.begin(LCD_COLS, LCD_ROWS);
+ byte foo = 0;
+ byte sel = 0;
+ unsigned int bar = 1;
+ long baz  = 0;
+ float bak = 0.0;
 
-    uiClear();
+ // Create a list of states and values for a select input
+ MENU_SELECT_ITEM  sel_ign = { 2, {"Ignore"} };
+ MENU_SELECT_ITEM  sel_on  = { 1, {"On"} };
+ MENU_SELECT_ITEM  sel_off = { 0, {"Off"} };
 
-    Menu.setDrawHandler(uiDraw);
-    Menu.setExitHandler(uiClear);
-    Menu.setAnalogButtonPin(BUT_PIN, BUT_MAP, BUT_THRESH);
-    Menu.enable(true);
+ MENU_SELECT_LIST  state_list[] = { &sel_ign, &sel_on, &sel_off };
 
+ // the special target for our state input
 
-}
+ // TARGET VAR   LENGTH                          TARGET SELECT LIST
+ MENU_SELECT state_select = { &sel,           MENU_SELECT_SIZE(state_list),   MENU_TARGET(&state_list) };
 
-void uiCheck() {
-    Menu.checkInput();
+ // values to use
 
-}
+ //    TYPE            MAX    MIN    TARGET
+ MENU_VALUE foo_value = { TYPE_BYTE,       100,   0,     MENU_TARGET(&foo) };
+ MENU_VALUE bar_value = { TYPE_UINT,       10000, 100,   MENU_TARGET(&bar) };
+ MENU_VALUE baz_value = { TYPE_LONG,       10000, 1,     MENU_TARGET(&baz) };
+ MENU_VALUE bak_value = { TYPE_FLOAT_1000, 0,     0,     MENU_TARGET(&bak) };
+ MENU_VALUE sel_value = { TYPE_SELECT,     0,     0,     MENU_TARGET(&state_select) };
 
-void testAction() {
+ //        LABEL           TYPE        LENGTH    TARGET
+ MENU_ITEM item_checkme  = { {"Byte Edit"},    ITEM_VALUE,  0,        MENU_TARGET(&foo_value) };
+ MENU_ITEM item_barme    = { {"UInt Edit"},     ITEM_VALUE,  0,        MENU_TARGET(&bar_value) };
+ MENU_ITEM item_bazme    = { {"Long Edit"},    ITEM_VALUE,  0,        MENU_TARGET(&baz_value) };
+ MENU_ITEM item_bakme    = { {"Float Edit"},   ITEM_VALUE,  0,        MENU_TARGET(&bak_value) };
+ MENU_ITEM item_state    = { {"Select Input"}, ITEM_VALUE,  0,        MENU_TARGET(&sel_value) };
+ MENU_ITEM item_testme   = { {"Test Action"},  ITEM_ACTION, 0,        MENU_TARGET(uiQwkScreen) };
 
-    digitalWrite(5, HIGH);
-}
+ //        List of items in menu level
+ MENU_LIST root_list[]   = { &item_checkme, &item_barme, &item_bazme, &item_bakme, &item_state, &item_testme };
 
-
-void uiDraw(char* p_text, int p_row, int p_col, int len) {
-    lcd.setCursor(p_col, p_row);
-
-    for( int i = 0; i < len; i++ ) {
-        if( p_text[i] < '!' || p_text[i] > '~' )
-            lcd.write(' ');
-        else
-            lcd.write(p_text[i]);
-    }
-}
-
-
-void uiClear() {
-
-    lcd.clear();
-    lcd.setCursor(0, 0);
-    lcd.print("Enter for Menu");
-}
+ // Root item is always created last, so we can add all other items to it
+ MENU_ITEM menu_root     = { {"Root"},        ITEM_MENU,   MENU_SIZE(root_list),    MENU_TARGET(&root_list) };
 
 
-void uiQwkScreen() {
-    lcd.clear();
-    Menu.enable(false);
+ // initialize LCD object
+ LiquidCrystal lcd(LCD_RS, LCD_EN, LCD_D4, LCD_D5, LCD_D6, LCD_D7);
 
-    lcd.print("Action!");
-    lcd.setCursor(0, 1);
-    lcd.print("Enter 2 return");
+ OMMenuMgr Menu(&menu_root);
 
-    while( Menu.checkInput() != BUTTON_SELECT ) {
-        ; // wait!
-    }
 
-    Menu.enable(true);
-    lcd.clear();
-}
+
+ void uiMenuSetup() {
+
+ lcd.begin(LCD_COLS, LCD_ROWS);
+
+ uiClear();
+
+ Menu.setDrawHandler(uiDraw);
+ Menu.setExitHandler(uiClear);
+ Menu.setAnalogButtonPin(BUT_PIN, BUT_MAP, BUT_THRESH);
+ Menu.enable(true);
+
+
+ }
+
+ void uiCheck() {
+ Menu.checkInput();
+
+ }
+
+ void testAction() {
+
+ digitalWrite(5, HIGH);
+ }
+
+
+ void uiDraw(char* p_text, int p_row, int p_col, int len) {
+ lcd.setCursor(p_col, p_row);
+
+ for( int i = 0; i < len; i++ ) {
+ if( p_text[i] < '!' || p_text[i] > '~' )
+ lcd.write(' ');
+ else
+ lcd.write(p_text[i]);
+ }
+ }
+
+
+ void uiClear() {
+
+ lcd.clear();
+ lcd.setCursor(0, 0);
+ lcd.print("Enter for Menu");
+ }
+
+
+ void uiQwkScreen() {
+ lcd.clear();
+ Menu.enable(false);
+
+ lcd.print("Action!");
+ lcd.setCursor(0, 1);
+ lcd.print("Enter 2 return");
+
+ while( Menu.checkInput() != BUTTON_SELECT ) {
+ ; // wait!
+ }
+
+ Menu.enable(true);
+ lcd.clear();
+ }
  @endcode
 
-*/
+ */
 
 class OMMenuMgr {
-
 
 public:
 
     OMMenuMgr(const OMMenuItem * c_first);
 
-    void handleMenu(Button key,
-    		MenuDrawHandler & drawHandler,
-			MenuExitHandler & exitHandler);
+    void handleMenu(Button key, MenuDrawHandler & drawHandler,
+                    MenuExitHandler & exitHandler);
 
-	volatile bool isInMenu() const {
-		return m_inMenu;
-	}
+    volatile bool isInMenu() const {
+        return m_inMenu;
+    }
 
-	void setInMenu(volatile bool inMenu) {
-		m_inMenu = inMenu;
-	}
+    void setInMenu(volatile bool inMenu) {
+        m_inMenu = inMenu;
+    }
 
 private:
 
-    bool           m_inEdit;
-    volatile bool  m_inMenu;
-    OMMenuItem*    m_curSel;
-    OMMenuItem*    m_curParent;
-    OMMenuItem*    m_rootItem;
-    OMMenuItem*    m_hist[OM_MENU_MAXDEPTH];
-    uint8_t        m_curTarget;
-    char           m_dispBuf[OM_MENU_COLS];
+    bool m_inEdit;
+    volatile bool m_inMenu;
+    OMMenuItem* m_curSel;
+    OMMenuItem* m_curParent;
+    OMMenuItem* m_rootItem;
+    OMMenuItem* m_hist[OM_MENU_MAXDEPTH];
+    uint8_t m_curTarget;
+    char m_dispBuf[OM_MENU_COLS];
 
-    uint8_t       m_temp;
-    long          m_tempL;
-    int           m_tempI;
-    float         m_tempF;
+    uint8_t m_temp;
+    long m_tempL;
+    int m_tempI;
+    float m_tempF;
 
-    void        activate(OMMenuItem* p_item, MenuExitHandler & exitHandler, MenuDrawHandler & drawHandler, bool p_return = false);
-    void        edit(OMMenuItem* p_item, MenuChangeType p_type, MenuExitHandler & exitHandler, MenuDrawHandler & drawHandler);
-    void        displayList(OMMenuItem* p_item, MenuDrawHandler & drawHandler, uint8_t p_target = 0);
-    void        displayEdit(OMMenuItem* p_item, MenuDrawHandler & drawHandler, bool withCallback);
-    void        menuNav(MenuChangeType p_mode, MenuExitHandler & exitHandler, MenuDrawHandler & drawHandler);
-    void        pushHist(OMMenuItem* p_item);
+    void activate(OMMenuItem* p_item, MenuExitHandler & exitHandler,
+                  MenuDrawHandler & drawHandler, bool p_return = false);
+    void edit(OMMenuItem* p_item, MenuChangeType p_type,
+              MenuExitHandler & exitHandler, MenuDrawHandler & drawHandler);
+    void displayList(OMMenuItem* p_item, MenuDrawHandler & drawHandler,
+                     uint8_t p_target = 0);
+    void displayEdit(OMMenuItem* p_item, MenuDrawHandler & drawHandler,
+                     bool withCallback);
+    void menuNav(MenuChangeType p_mode, MenuExitHandler & exitHandler,
+                 MenuDrawHandler & drawHandler);
+    void pushHist(OMMenuItem* p_item);
     OMMenuItem* popHist();
-    void        display(char* p_str, int p_row, int p_col, int p_count, MenuDrawHandler & drawHandler);
-    void        displayVoidNum(void* p_ptr, MenuEditType p_type, int p_row, int p_col, MenuDrawHandler & drawHandler);
-    void        modifyTemp(MenuEditType p_type, MenuEditMode p_mode, long p_min, long p_max, MenuDrawHandler & drawHandler);
-    void        exitMenu(MenuExitHandler & exitHandler);
-    void        modifySel(OMMenuValue* p_value, MenuEditMode p_mode, MenuDrawHandler & drawHandler, bool withCallback);
-    void        displaySelVal(OMMenuSelectListItem** p_list, uint8_t p_idx, MenuDrawHandler & drawHandler);
-    void        displayFlagVal(MenuDrawHandler & drawHandler);
-    void        clearReaminingLines(MenuDrawHandler & drawHandler);
-
-
-
+    void display(char* p_str, int p_row, int p_col, int p_count,
+                 MenuDrawHandler & drawHandler);
+    void displayVoidNum(void* p_ptr, MenuEditType p_type, int p_row, int p_col,
+                        MenuDrawHandler & drawHandler);
+    void modifyTemp(MenuEditType p_type, MenuEditMode p_mode, long p_min,
+                    long p_max, MenuDrawHandler & drawHandler);
+    void exitMenu(MenuExitHandler & exitHandler);
+    void modifySel(OMMenuValue* p_value, MenuEditMode p_mode,
+                   MenuDrawHandler & drawHandler, bool withCallback);
+    void displaySelVal(OMMenuSelectListItem** p_list, uint8_t p_idx,
+                       MenuDrawHandler & drawHandler);
+    void displayFlagVal(MenuDrawHandler & drawHandler);
+    void clearReaminingLines(MenuDrawHandler & drawHandler);
 
     // Handle templates for EEPROM writing of different data types
 
-    template <typename T>
+    template<typename T>
     void _eewrite(OMMenuValue* p_target, T p_item) {
         int loc = pgm_read_word(&(p_target->eepromLoc));
-        if( loc != 0 )
+        if (loc != 0)
             OMEEPROM::write(loc, p_item);
     }
 

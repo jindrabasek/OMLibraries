@@ -10,9 +10,11 @@
 
 class MenuDrawHandler {
 public:
-	virtual ~MenuDrawHandler(){}
+    virtual ~MenuDrawHandler() {
+    }
 
-	virtual void draw(char* p_text, int p_row, int p_col, int len){}
+    virtual void draw(char* p_text, int p_row, int p_col, int len) {
+    }
 };
 
 #endif /* LIBRARIES_OMMENUMGR_MENUDRAWHANDLER_H_ */
