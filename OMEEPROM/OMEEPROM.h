@@ -1,4 +1,3 @@
-
 /* 
  
  EEPROM Storage Library
@@ -24,14 +23,12 @@
  
  */
 
-
 #ifndef	OM_EEPROM_H
 #define OM_EEPROM_H
 
-#include "Arduino.h"
-
-#include <inttypes.h>
-#include "EEPROM.h"
+#include <Arduino.h>
+#include <stdbool.h>
+#include <stdint.h>
 
 /** EEPROM Management Class
  
@@ -56,11 +53,11 @@
  
  void setup() {
  
-    if( OMEEPROM::saved() )
-        loadvars();
-    else
-        savevars();
-    
+ if( OMEEPROM::saved() )
+ loadvars();
+ else
+ savevars();
+
  }
  
  void loop() {
@@ -69,22 +66,22 @@
  
  void loadvars() {
  
-    using namespace OMEEPROM;
+ using namespace OMEEPROM;
  
-    read(1, foo); // first position, one byte
-    read(2, bar); // 2nd position, two bytes
-    read(4, baz); // fourth position (previous values used 1-3)
+ read(1, foo); // first position, one byte
+ read(2, bar); // 2nd position, two bytes
+ read(4, baz); // fourth position (previous values used 1-3)
  }
  
  void savevars() {
  
-    using namespace OMEEPROM;
+ using namespace OMEEPROM;
 
-    write(1, foo);
-    write(2, bar);
-    write(4, baz);
+ write(1, foo);
+ write(2, bar);
+ write(4, baz);
  
-    version(dataVersion);
+ version(dataVersion);
  
  }
  @endcode
@@ -97,35 +94,35 @@
 
 namespace OMEEPROM {
 
-    
-     bool saved();
-     void saved( bool saved );
-    
-     void write( int pos, uint8_t& val, byte len );
-    
-    template <typename T>
+    bool saved();
+    void saved( bool saved);
+
+    void write(int pos, uint8_t& val, byte len);
+
+    template<typename T>
     void write(int pos, T& p_item) {
-        byte* p = (byte*)(void*)&p_item;   
+        byte* p = (byte*) (void*) &p_item;
         write(pos, *p, sizeof(T));
     }
 
-     void read( int pos, uint8_t& val, byte len );
-    
-     template <typename T>
-     void read(int pos, T& p_item) {
-        byte* p = (byte*)(void*)&p_item;
-        read(pos, *p, sizeof(T));
-     }
-     
-     unsigned int version();
-     void version(unsigned int);
-    
-        // 0, 1, and 2 bytes are used for internal data (saved flag, version)
-     const unsigned int s_EEPROMfirstUserPos = 3;
-     static bool m_forcePos = true;
-    
-};
+    void read(int pos, uint8_t& val, byte len);
 
+    template<typename T>
+    void read(int pos, T& p_item) {
+        byte* p = (byte*) (void*) &p_item;
+        read(pos, *p, sizeof(T));
+    }
+
+    unsigned int version();
+    void version(unsigned int);
+
+    // 0, 1, and 2 bytes are used for internal data (saved flag, version)
+    const unsigned int s_EEPROMfirstUserPos = 3;
+
+    static bool m_forcePos = true;
+
+}
+;
 
 #endif //OM_EEPROM_H
 

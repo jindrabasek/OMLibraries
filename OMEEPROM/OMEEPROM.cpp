@@ -23,60 +23,57 @@
  
  */
 
-
-#include "OMEEPROM.h"
+#include <Arduino.h>
+#include <EEPROM.h>
+#include <OMEEPROM.h>
+#include <stdbool.h>
+#include <stdint.h>
 
 // using namespace OMEEPROM;
 
-
-
-
 bool OMEEPROM::saved() {
-    
+
     // read eeprom saved status
-    
+
     uint8_t saved = EEPROM.read(0);
-    
+
     // EEPROM memory is by default set to 1, so we
     // set it to zero if we've written data to eeprom
-    return( ! saved );
+    return (!saved);
 }
 
-void OMEEPROM::saved( bool saved ) {
+void OMEEPROM::saved( bool saved) {
     // set eeprom saved status
-    
+
     // EEPROM memory is by default set to 1, so we
     // set it to zero if we've written data to eeprom
-    
-    EEPROM.write(0, !saved);
+
+    EEPROM.update(0, !saved);
 }
 
+void OMEEPROM::write(int pos, byte& val, byte len) {
+    byte* p = (byte*) (void*) &val;
 
-void OMEEPROM::write( int pos, byte& val, byte len ) {
-    byte* p = (byte*)(void*)&val;
-    
-    if( m_forcePos)
+    if (m_forcePos)
         pos += s_EEPROMfirstUserPos;
 
-    for( byte i = 0; i < len; i++ )
-        EEPROM.write(pos++, *p++);    
-    
+    for (byte i = 0; i < len; i++)
+        EEPROM.write(pos++, *p++);
+
     // indicate that memory has been saved
-    saved(true);
-    
+    //saved(true);
+
 }
-
-
 
 // read functions
 
-void OMEEPROM::read( int pos, byte& val, byte len ) {
-    byte* p = (byte*)(void*)&val;
-    
-    if( m_forcePos)
+void OMEEPROM::read(int pos, byte& val, byte len) {
+    byte* p = (byte*) (void*) &val;
+
+    if (m_forcePos)
         pos += s_EEPROMfirstUserPos;
-    
-    for(byte i = 0; i < len; i++) 
+
+    for (byte i = 0; i < len; i++)
         *p++ = EEPROM.read(pos++);
 }
 
@@ -87,13 +84,13 @@ void OMEEPROM::read( int pos, byte& val, byte len ) {
  */
 
 unsigned int OMEEPROM::version() {
-    
+
     unsigned int eeprom_ver = 0;
     m_forcePos = false;
     read(1, eeprom_ver);
     m_forcePos = true;
     return eeprom_ver;
-    
+
 }
 
 /** Store Version Number to EEPROM
