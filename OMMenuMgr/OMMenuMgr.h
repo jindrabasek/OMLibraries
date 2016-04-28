@@ -28,12 +28,14 @@
 #define OM_MENUMGR_H
 
 #include <avr/pgmspace.h>
+#include <MenuAction.h>
 #include <MenuDrawHandler.h>
 #include <MenuExitHandler.h>
 #include <MenuValueHolder.h>
 #include <OMEEPROM.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include <stdlib.h>
 
 #ifndef OM_MENU_ROWS
 #define OM_MENU_ROWS    4
@@ -944,12 +946,11 @@ private:
     OMMenuItem* m_rootItem;
     OMMenuItem* m_hist[OM_MENU_MAXDEPTH];
     uint8_t m_curTarget;
-    char m_dispBuf[OM_MENU_COLS];
 
-    uint8_t m_temp;
-    long m_tempL;
-    int m_tempI;
-    float m_tempF;
+    uint8_t m_temp = 0;
+    long m_tempL = 0;
+    int m_tempI = 0;
+    float m_tempF = 0;
 
     void activate(OMMenuItem* p_item, MenuExitHandler & exitHandler,
                   MenuDrawHandler & drawHandler, bool p_return = false);
@@ -958,7 +959,7 @@ private:
     void displayList(OMMenuItem* p_item, MenuDrawHandler & drawHandler,
                      uint8_t p_target = 0);
     void displayEdit(OMMenuItem* p_item, MenuDrawHandler & drawHandler,
-                     bool withCallback);
+    bool withCallback);
     void menuNav(MenuChangeType p_mode, MenuExitHandler & exitHandler,
                  MenuDrawHandler & drawHandler);
     void pushHist(OMMenuItem* p_item);
@@ -966,15 +967,16 @@ private:
     void display(char* p_str, int p_row, int p_col, int p_count,
                  MenuDrawHandler & drawHandler);
     void displayVoidNum(void* p_ptr, MenuEditType p_type, int p_row, int p_col,
-                        MenuDrawHandler & drawHandler);
+                        MenuDrawHandler & drawHandler, char* m_dispBuf);
     void modifyTemp(MenuEditType p_type, MenuEditMode p_mode, long p_min,
-                    long p_max, MenuDrawHandler & drawHandler);
+                    long p_max, MenuDrawHandler & drawHandler, char* m_dispBuf);
     void exitMenu(MenuExitHandler & exitHandler);
     void modifySel(OMMenuValue* p_value, MenuEditMode p_mode,
-                   MenuDrawHandler & drawHandler, bool withCallback);
+                   MenuDrawHandler & drawHandler, bool withCallback,
+                   char* m_dispBuf);
     void displaySelVal(OMMenuSelectListItem** p_list, uint8_t p_idx,
-                       MenuDrawHandler & drawHandler);
-    void displayFlagVal(MenuDrawHandler & drawHandler);
+                       MenuDrawHandler & drawHandler, char* m_dispBuf);
+    void displayFlagVal(MenuDrawHandler & drawHandler, char* m_dispBuf);
     void clearReaminingLines(MenuDrawHandler & drawHandler);
 
     // Handle templates for EEPROM writing of different data types
@@ -986,6 +988,103 @@ private:
             OMEEPROM::write(loc, p_item);
     }
 
+    template<typename T>
+    void _eeread(OMMenuValue* p_target, T& p_item) {
+        int loc = pgm_read_word(&(p_target->eepromLoc));
+        if (loc != 0)
+            OMEEPROM::read(loc, p_item);
+    }
+
+    template<typename T, typename I>
+    T* pgmPointer(I& pgmAddress) {
+        return reinterpret_cast<T*>(reinterpret_cast<void*>(pgm_read_word(&(pgmAddress))));
+    }
+
+    template<typename T>
+    T pgmByte(uint8_t& pgmAddress) {
+        return (T) (pgm_read_byte(&(pgmAddress)));
+    }
+
+    uint8_t pgmByte(uint8_t& pgmAddress) {
+        return pgm_read_byte(&(pgmAddress));
+    }
+
+    uint16_t pgmWord(int& pgmAddress) {
+        return pgm_read_word(&(pgmAddress));
+    }
+
+    template<typename E, typename T, typename I>
+    void* unwrapEditValue(T& tempValue, OMMenuValue* value,
+                          I& valPtr) {
+        void* unwrappedValPtr = NULL;
+        if (valPtr == NULL && pgmWord(value->eepromLoc) > 0) {
+            _eeread(value, *reinterpret_cast<E*>(&tempValue));
+            unwrappedValPtr = &tempValue;
+        } else if (valPtr != NULL) {
+            unwrappedValPtr = reinterpret_cast<MenuValueHolder<T>*>(valPtr)
+                    ->getValuePtr();
+            tempValue = *reinterpret_cast<MenuValueHolder<T>*>(valPtr)
+                    ->getValuePtr();
+        } else {
+            abort();
+        }
+        return unwrappedValPtr;
+    }
+
+    template<typename I>
+    uint8_t getCurrentValue(OMMenuValue* value, I& valPtr) {
+        uint8_t curVal;
+        if (pgmPointer<void>(valPtr) == NULL && pgmWord(value->eepromLoc) > 0) {
+            _eeread(value, curVal);
+        } else if (pgmPointer<void>(valPtr) != NULL) {
+            curVal =
+                    *(pgmPointer<MenuValueHolder<uint8_t>>(valPtr)->getValuePtr());
+        } else {
+            abort();
+        }
+        return curVal;
+    }
+
+    template<typename I>
+    void execMenuAction(I& pointerToMenuValueHolderWithMenuAction) {
+        MenuAction * callback = pgmPointer<MenuValueHolder<MenuAction>>(
+                pointerToMenuValueHolderWithMenuAction)->getValuePtr();
+
+        if (callback != NULL) {
+            callback->doAction();
+        }
+    }
+
+    template<typename E, typename T, typename M>
+    void* modTempValue(T& tempValue, M mod, long p_min, long p_max) {
+        *reinterpret_cast<E*>(&tempValue) += mod;
+        if (p_min != 0 || p_max != 0)
+            tempValue =
+                    tempValue > p_max ? p_min :
+                            (tempValue < p_min ? p_max : tempValue);
+        return reinterpret_cast<void*>(&tempValue);
+    }
+
+    template<typename R, typename I>
+    R* pgmTargetValue(bool withCallback, I& pointerToTargetValue) {
+        if (withCallback) {
+            OMMenuValueAndAction * valueAndAction = pgmPointer<
+                    OMMenuValueAndAction>(pointerToTargetValue);
+            return pgmPointer<R>(valueAndAction->targetValue);
+        } else {
+            return pgmPointer<R>(pointerToTargetValue);
+        }
+    }
+
+    template<typename E, typename T, typename I>
+    void saveValue(T& tempValue, I& pointerToMenuValueHolder,
+                    OMMenuValue* thisValue) {
+        if (pointerToMenuValueHolder != NULL) {
+            *reinterpret_cast<MenuValueHolder<E>*>(pointerToMenuValueHolder)
+                    ->getValuePtr() = tempValue;
+        }
+        _eewrite<E>(thisValue, tempValue);
+    }
 };
 
 #endif //OM_MENUMGR_H

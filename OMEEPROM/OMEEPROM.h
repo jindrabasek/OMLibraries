@@ -105,12 +105,26 @@ namespace OMEEPROM {
         write(pos, *p, sizeof(T));
     }
 
+    template<typename T>
+    void writeConst(int pos, T p_item) {
+        byte* p = (byte*) (void*) &p_item;
+        write(pos, *p, sizeof(T));
+    }
+
     void read(int pos, uint8_t& val, byte len);
 
     template<typename T>
     void read(int pos, T& p_item) {
         byte* p = (byte*) (void*) &p_item;
         read(pos, *p, sizeof(T));
+    }
+
+    template<typename T>
+    T read(int pos) {
+        T item;
+        byte* p = (byte*) (void*) &item;
+        read(pos, *p, sizeof(T));
+        return item;
     }
 
     unsigned int version();
