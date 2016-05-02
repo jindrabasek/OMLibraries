@@ -8,12 +8,14 @@
 #ifndef LIBRARIES_OMMENUMGR_MENUDRAWHANDLER_H_
 #define LIBRARIES_OMMENUMGR_MENUDRAWHANDLER_H_
 
+#include <stdint.h>
+
 class MenuDrawHandler {
 public:
     virtual ~MenuDrawHandler() {
     }
 
-    virtual void draw(char* p_text, int p_row, int p_col, int len) {
+    virtual void draw(char* p_text, uint8_t p_row, uint8_t p_col, uint8_t len) {
     }
 };
 

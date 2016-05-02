@@ -964,9 +964,9 @@ private:
                  MenuDrawHandler & drawHandler);
     void pushHist(OMMenuItem* p_item);
     OMMenuItem* popHist();
-    void display(char* p_str, int p_row, int p_col, int p_count,
+    void display(char* p_str, uint8_t p_row, uint8_t p_col, uint8_t p_count,
                  MenuDrawHandler & drawHandler);
-    void displayVoidNum(void* p_ptr, MenuEditType p_type, int p_row, int p_col,
+    void displayVoidNum(void* p_ptr, MenuEditType p_type, uint8_t p_row, uint8_t p_col,
                         MenuDrawHandler & drawHandler, char* m_dispBuf);
     void modifyTemp(MenuEditType p_type, MenuEditMode p_mode, long p_min,
                     long p_max, MenuDrawHandler & drawHandler, char* m_dispBuf);

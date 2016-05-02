@@ -23,7 +23,6 @@
  
  */
 
-#include <Arduino.h>
 #include <EEPROM.h>
 #include <OMEEPROM.h>
 #include <stdbool.h>
@@ -51,13 +50,13 @@ void OMEEPROM::saved( bool saved) {
     EEPROM.update(0, !saved);
 }
 
-void OMEEPROM::write(int pos, byte& val, byte len) {
-    byte* p = (byte*) (void*) &val;
+void OMEEPROM::write(int pos, uint8_t& val, uint8_t len) {
+    uint8_t* p = (uint8_t*) (void*) &val;
 
     if (m_forcePos)
         pos += s_EEPROMfirstUserPos;
 
-    for (byte i = 0; i < len; i++)
+    for (uint8_t i = 0; i < len; i++)
         EEPROM.write(pos++, *p++);
 
     // indicate that memory has been saved
@@ -67,13 +66,13 @@ void OMEEPROM::write(int pos, byte& val, byte len) {
 
 // read functions
 
-void OMEEPROM::read(int pos, byte& val, byte len) {
-    byte* p = (byte*) (void*) &val;
+void OMEEPROM::read(int pos, uint8_t& val, uint8_t len) {
+    uint8_t* p = (uint8_t*) (void*) &val;
 
     if (m_forcePos)
         pos += s_EEPROMfirstUserPos;
 
-    for (byte i = 0; i < len; i++)
+    for (uint8_t i = 0; i < len; i++)
         *p++ = EEPROM.read(pos++);
 }
 

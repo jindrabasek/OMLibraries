@@ -26,7 +26,6 @@
 #ifndef	OM_EEPROM_H
 #define OM_EEPROM_H
 
-#include <Arduino.h>
 #include <stdbool.h>
 #include <stdint.h>
 
@@ -47,7 +46,7 @@
  
  const int dataVersion = 100;
  
- byte  foo = 1;
+ uint8_t  foo = 1;
  int   bar = 3500;
  float baz = 64.5;
  
@@ -68,7 +67,7 @@
  
  using namespace OMEEPROM;
  
- read(1, foo); // first position, one byte
+ read(1, foo); // first position, one uint8_t
  read(2, bar); // 2nd position, two bytes
  read(4, baz); // fourth position (previous values used 1-3)
  }
@@ -97,32 +96,32 @@ namespace OMEEPROM {
     bool saved();
     void saved( bool saved);
 
-    void write(int pos, uint8_t& val, byte len);
+    void write(int pos, uint8_t& val, uint8_t len);
 
     template<typename T>
     void write(int pos, T& p_item) {
-        byte* p = (byte*) (void*) &p_item;
+        uint8_t* p = (uint8_t*) (void*) &p_item;
         write(pos, *p, sizeof(T));
     }
 
     template<typename T>
     void writeConst(int pos, T p_item) {
-        byte* p = (byte*) (void*) &p_item;
+        uint8_t* p = (uint8_t*) (void*) &p_item;
         write(pos, *p, sizeof(T));
     }
 
-    void read(int pos, uint8_t& val, byte len);
+    void read(int pos, uint8_t& val, uint8_t len);
 
     template<typename T>
     void read(int pos, T& p_item) {
-        byte* p = (byte*) (void*) &p_item;
+        uint8_t* p = (uint8_t*) (void*) &p_item;
         read(pos, *p, sizeof(T));
     }
 
     template<typename T>
     T read(int pos) {
         T item;
-        byte* p = (byte*) (void*) &item;
+        uint8_t* p = (uint8_t*) (void*) &item;
         read(pos, *p, sizeof(T));
         return item;
     }

@@ -25,13 +25,12 @@
  */
 
 #include <avr/pgmspace.h>
-#include <Arduino.h>
-#include <MenuAction.h>
 #include <MenuDrawHandler.h>
 #include <MenuExitHandler.h>
 #include <MenuValueHolder.h>
 #include <OMMenuMgr.h>
 #include <stdbool.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -76,7 +75,7 @@ OMMenuMgr::OMMenuMgr(const OMMenuItem* c_first) {
 
 }
 
-void OMMenuMgr::display(char* p_str, int p_row, int p_col, int p_count,
+void OMMenuMgr::display(char* p_str, uint8_t p_row, uint8_t p_col, uint8_t p_count,
                         MenuDrawHandler & drawHandler) {
     drawHandler.draw(p_str, p_row, p_col, p_count);
 }
@@ -217,14 +216,14 @@ void OMMenuMgr::displayList(OMMenuItem* p_item, MenuDrawHandler & drawHandler,
     m_curSel = pgmPointer<OMMenuItem>(items[p_target]);
 
     // loop through display rows
-    for (byte i = 0; i < OM_MENU_ROWS; i++) {
+    for (uint8_t i = 0; i < OM_MENU_ROWS; i++) {
         // flush buffer
         char m_dispBuf[OM_MENU_COLS] = { ' ' };
 
-        int startX = 0;
+        uint8_t startX = 0;
 
         // display cursor on row
-        int dispCur = sizeof(char) * sizeof(OM_MENU_CURSOR) - 1;
+        uint8_t dispCur = sizeof(char) * sizeof(OM_MENU_CURSOR) - 1;
         display((char*) (i == selectorPosition ? OM_MENU_CURSOR :
         OM_MENU_NOCURSOR), i, 0, dispCur, drawHandler);
         startX += dispCur;
@@ -333,22 +332,22 @@ bool withCallback) {
 
     memset(m_dispBuf, ' ', sizeof(char) * OM_MENU_COLS);
     // clear remaining lines
-    for (byte i = 2; i < OM_MENU_ROWS; i++) {
+    for (uint8_t i = 2; i < OM_MENU_ROWS; i++) {
         display(m_dispBuf, i, 0, OM_MENU_COLS, drawHandler);
     }
 }
 
 // rationalize a way to display any sort of number as a char*, rationalize it buddy, rationalize it good...
 
-void OMMenuMgr::displayVoidNum(void* p_ptr, MenuEditType p_type, int p_row,
-                               int p_col, MenuDrawHandler & drawHandler,
+void OMMenuMgr::displayVoidNum(void* p_ptr, MenuEditType p_type, uint8_t p_row,
+                               uint8_t p_col, MenuDrawHandler & drawHandler,
                                char* m_dispBuf) {
 
     // clear out display buffer
     memset(m_dispBuf, ' ', sizeof(char) * OM_MENU_COLS);
 
     // handle variable precision for float nums
-    byte floatPrecision = 1;
+    uint8_t floatPrecision = 1;
 
     if (p_type == TYPE_FLOAT_100)
         floatPrecision = 2;
@@ -380,7 +379,7 @@ void OMMenuMgr::modifyTemp(MenuEditType p_type, MenuEditMode p_mode, long p_min,
 
     void* tempNum;
 
-    int mod = (p_mode == MODE_INCREMENT) ? 1 : -1;
+    int8_t mod = (p_mode == MODE_INCREMENT) ? 1 : -1;
 
     // apply holding rate mod
     //mod *= m_holdMod;
